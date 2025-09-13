@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drone Flight Path Generator</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            background-color: #f5f5f5;
+        }
+        
+        header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .map-container {
+            flex: 7;
+            position: relative;
+        }
+        
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .controls-container {
+            flex: 3;
+            display: flex;
+            flex-direction: column;
+            background-color: white;
+            border-left: 1px solid #ddd;
+            overflow-y: auto;
+            min-width: 350px;
+        }
+        
+        .control-section {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .control-section h3 {
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        
+        button {
+            padding: 8px 12px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        button.danger {
+            background-color: #e74c3c;
+        }
+        
+        button.danger:hover {
+            background-color: #c0392b;
+        }
+        
+        button.success {
+            background-color: #2ecc71;
+        }
+        
+        button.success:hover {
+            background-color: #27ae60;
+        }
+        
+        select, input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .log-container {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            border-top: 1px solid #eee;
+        }
+        
+        .log-container h3 {
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        
+        #activityLog {
+            height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            background-color: #f9f9f9;
+        }
+        
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 15px;
+            background-color: #34495e;
+            color: white;
+            font-size: 14px;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .close {
+            font-size: 24px;
+            cursor: pointer;
+        }
+        
+        .waypoint-list {
+            margin: 15px 0;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            padding: 10px;
+        }
+        
+        .waypoint-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .compass {
+            width: 150px;
+            height: 150px;
+            border: 2px solid #2c3e50;
+            border-radius: 50%;
+            position: relative;
+            margin: 0 auto;
+            background-color: #f8f8f8;
+        }
+        
+        .compass-needle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 2px;
+            height: 40%;
+            background-color: red;
+            transform-origin: bottom center;
+            transform: translateX(-50%) rotate(0deg);
+        }
+        
+        .compass-label {
+            position: absolute;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .compass-n { top: 5px; left: 50%; transform: translateX(-50%); }
+        .compass-e { top: 50%; right: 5px; transform: translateY(-50%); }
+        .compass-s { bottom: 5px; left: 50%; transform: translateX(-50%); }
+        .compass-w { top: 50%; left: 5px; transform: translateY(-50%); }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .menu-bar {
+            display: flex;
+            background-color: #34495e;
+            padding: 0 10px;
+        }
+        
+        .menu-item {
+            padding: 8px 15px;
+            color: white;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .menu-item:hover {
+            background-color: #2c3e50;
+        }
+        
+        .submenu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 100;
+            min-width: 150px;
+        }
+        
+        .menu-item:hover .submenu {
+            display: block;
+        }
+        
+        .submenu-item {
+            padding: 10px 15px;
+            color: #333;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        
+        .submenu-item:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .tab-container {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .tab {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+        
+        .tab.active {
+            border-bottom-color: #3498db;
+            color: #3498db;
+        }
+        
+        .tab-content {
+            padding: 15px;
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        @media (max-width: 992px) {
+            .main-container {
+                flex-direction: column;
+            }
+            
+            .controls-container {
+                border-left: none;
+                border-top: 1px solid #ddd;
+                max-height: 40vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Drone Flight Path Generator</h1>
+        <div class="header-controls">
+            <div id="gpsStatus">GPS: Acquiring signal...</div>
+            <div id="currentDateTime"></div>
+        </div>
+    </header>
+    
+    <div class="menu-bar">
+        <div class="menu-item">FILE
+            <div class="submenu">
+                <div class="submenu-item" onclick="saveProject()">Save Project</div>
+                <div class="submenu-item" onclick="loadProject()">Load Project</div>
+                <div class="submenu-item" onclick="exitApp()">Exit</div>
+            </div>
+        </div>
+        <div class="menu-item">EDIT
+            <div class="submenu">
+                <div class="submenu-item" onclick="undo()">Undo</div>
+                <div class="submenu-item" onclick="redo()">Redo</div>
+                <div class="submenu-item" onclick="showSettings()">Settings</div>
+            </div>
+        </div>
+        <div class="menu-item">VIEW
+            <div class="submenu">
+                <div class="submenu-item" onclick="refreshMap()">Refresh Map</div>
+                <div class="submenu-item" onclick="toggleOnlineMode()">Toggle Online Mode</div>
+            </div>
+        </div>
+        <div class="menu-item">DATA
+            <div class="submenu">
+                <div class="submenu-item" onclick="clearAllData()">Clear All Data</div>
+                <div class="submenu-item" onclick="exportAllData()">Export All Data</div>
+            </div>
+        </div>
+        <div class="menu-item">HELP
+            <div class="submenu">
+                <div class="submenu-item" onclick="showAbout()">About</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="main-container">
+        <div class="map-container">
+            <div id="map"></div>
+        </div>
+        
+        <div class="controls-container">
+            <div class="tab-container">
+                <div class="tab active" onclick="switchTab('flight-tab')">Flight Planning</div>
+                <div class="tab" onclick="switchTab('compass-tab')">Compass & GPS</div>
+                <div class="tab" onclick="switchTab('settings-tab')">Settings</div>
+            </div>
+            
+            <div id="flight-tab" class="tab-content active">
+                <div class="control-section">
+                    <h3>Waypoints</h3>
+                    <div class="button-group">
+                        <button onclick="addWaypoint()">Add Waypoint</button>
+                        <button onclick="clearWaypoints()" class="danger">Clear All</button>
+                    </div>
+                    
+                    <div class="waypoint-list" id="waypointList">
+                        <p>No waypoints added yet. Click on the map to add waypoints.</p>
+                    </div>
+                </div>
+                
+                <div class="control-section">
+                    <h3>Flight Path Settings</h3>
+                    <div class="form-group">
+                        <label for="altitude">Altitude (meters):</label>
+                        <input type="number" id="altitude" value="300" min="300">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="loopPath">
+                            Loop Path (don't return to origin)
+                        </label>
+                    </div>
+                    
+                    <div class="button-group">
+                        <button onclick="generatePath()" class="success">Generate Path</button>
+                        <button onclick="simulateFlight()">Simulate Flight</button>
+                    </div>
+                </div>
+                
+                <div class="control-section">
+                    <h3>Export Options</h3>
+                    <div class="form-group">
+                        <label for="exportMethod">Export Method:</label>
+                        <select id="exportMethod">
+                            <option>Display Only</option>
+                            <option>Save to File</option>
+                            <option>USB Transfer</option>
+                            <option>GPS Sync</option>
+                            <option>Memory Card</option>
+                            <option>Drone Firmware</option>
+                        </select>
+                    </div>
+                    
+                    <div class="button-group">
+                        <button onclick="exportCoordinates()">Export Coordinates</button>
+                        <button onclick="showFirmware()">Show Firmware Code</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="compass-tab" class="tab-content">
+                <div class="control-section">
+                    <h3>Compass</h3>
+                    <div class="compass">
+                        <div class="compass-needle" id="compassNeedle"></div>
+                        <div class="compass-label compass-n">N</div>
+                        <div class="compass-label compass-e">E</div>
+                        <div class="compass-label compass-s">S</div>
+                        <div class="compass-label compass-w">W</div>
+                    </div>
+                </div>
+                
+                <div class="control-section">
+                    <h3>GPS Coordinates</h3>
+                    <div class="form-group">
+                        <label>Current Position:</label>
+                        <div id="currentCoords">Lat: 0.046757, Lon: 37.654663</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Map Center:</label>
+                        <div id="mapCenterCoords">Lat: 0.046757, Lon: 37.654663</div>
+                    </div>
+                    
+                    <div class="button-group">
+                        <button onclick="setOrigin()">Set as Origin</button>
+                        <button onclick="centerOnDrone()">Center on Drone</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="settings-tab" class="tab-content">
+                <div class="control-section">
+                    <h3>Map Settings</h3>
+                    <div class="form-group">
+                        <label for="azureKey">Azure Maps Key:</label>
+                        <input type="password" id="azureKey" placeholder="Enter your Azure Maps key">
+                    </div>
+                    
+                    <div class="button-group">
+                        <button onclick="saveAzureKey()">Save Key</button>
+                        <button onclick="downloadMapArea()">Download Map Area</button>
+                    </div>
+                </div>
+                
+                <div class="control-section">
+                    <h3>Application Settings</h3>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="simulateGPS" checked>
+                            Simulate GPS Movement
+                        </label>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="onlineMode" checked>
+                            Online Mode
+                        </label>
+                    </div>
+                    
+                    <div class="button-group">
+                        <button onclick="clearCache()">Clear Cache</button>
+                        <button onclick="resetSettings()">Reset to Defaults</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="log-container">
+                <h3>Activity Log</h3>
+                <div id="activityLog"></div>
+                <div class="button-group">
+                    <button onclick="clearLog()">Clear Log</button>
+                    <button onclick="saveLog()">Save Log</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="status-bar">
+        <div id="coordinatesStatus">Lat: 0.000000, Lon: 0.000000</div>
+        <div id="zoomLevel">Zoom: 10</div>
+        <div id="mapMode">Mode: Online</div>
+    </div>
+    
+    <!-- Firmware Modal -->
+    <div id="firmwareModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Drone Firmware Code</h2>
+                <span class="close" onclick="closeModal('firmwareModal')">&times;</span>
+            </div>
+            <textarea id="firmwareCode" style="width: 100%; height: 300px; font-family: monospace; padding: 10px;"></textarea>
+            <div class="button-group">
+                <button onclick="copyFirmware()">Copy to Clipboard</button>
+                <button onclick="closeModal('firmwareModal')">Close</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Export Modal -->
+    <div id="exportModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Flight Path Coordinates</h2>
+                <span class="close" onclick="closeModal('exportModal')">&times;</span>
+            </div>
+            <pre id="exportData" style="white-space: pre-wrap; font-family: monospace; padding: 10px; max-height: 400px; overflow-y: auto;"></pre>
+            <div class="button-group">
+                <button onclick="copyExportData()">Copy to Clipboard</button>
+                <button onclick="saveExportData()">Save to File</button>
+                <button onclick="closeModal('exportModal')">Close</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Download Map Modal -->
+    <div id="downloadMapModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Download Map Area</h2>
+                <span class="close" onclick="closeModal('downloadMapModal')">&times;</span>
+            </div>
+            <div class="form-group">
+                <label for="centerLat">Center Latitude:</label>
+                <input type="number" id="centerLat" step="0.000001" value="0.046757">
+            </div>
+            <div class="form-group">
+                <label for="centerLon">Center Longitude:</label>
+                <input type="number" id="centerLon" step="0.000001" value="37.654663">
+            </div>
+            <div class="form-group">
+                <label for="downloadRadius">Radius (km):</label>
+                <input type="number" id="downloadRadius" value="10" min="1" max="100">
+            </div>
+            <div class="form-group">
+                <label for="downloadZoom">Zoom Level:</label>
+                <input type="number" id="downloadZoom" value="12" min="1" max="20">
+            </div>
+            <div class="button-group">
+                <button onclick="confirmDownloadMap()">Download</button>
+                <button onclick="closeModal('downloadMapModal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script>
+        // Initialize variables
+        let map;
+        let waypoints = [];
+        let flightPath;
+        let droneMarker;
+        let droneIcon;
+        let isSimulating = false;
+        let simulationInterval;
+        let currentSimulationIndex = 0;
+        let compassHeading = 0;
+        
+        // Initialize the application
+        function init() {
+            // Initialize map
+            map = L.map('map').setView([0.046757, 37.654663], 10);
+            
+            // Add tile layer (OpenStreetMap as default)
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+            
+            // Initialize drone icon
+            droneIcon = L.icon({
+                iconUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHZpZXdCb3g9IjAgMCA0OCA0OCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTI0IDZDMjQuODI4NCA2IDI1LjUgNi42NzE1NyAyNS41IDcuNVYxMC41QzI1LjUgMTEuMzI4NCAyNC44Mjg0IDEyIDI0IDEyQzIzLjE3MTYgMTIgMjIuNSAxMS4zMjg0IDIyLjUgMTAuNVY3LjVDMjIuNSA2LjY3MTU3IDIzLjE3MTYgNiAyNCA2WiIgZmlsbD0iIzMzMyIvPgo8cGF0aCBkPSJNMTIgMTZIMTVDMTUuODI4NCAxNiAxNi41IDE2LjY3MTYgMTYuNSAxNy41QzE2LjUgMTguMzI4NCAxNS44Mjg0IDE5IDE1IDE5SDEyQzExLjE3MTYgMTkgMTAuNSAxOC4zMjg0IDEwLjUgMTcuNUMxMCu1IDE2LjY3MTYgMTEuMTcxNiAxNiAxMiAxNloiIGZpbGw9IiMzMzMiLz4KPHBhdGggZD0iTTMzIDE2SDM2QzM2LjgyODQgMTYgMzcuNSAxNi42NzE2IDM3LjUgMTcuNUMzNy41IDE4LjMyODQgMzYuODI4NCAxOSAzNiAxOUgzM0MzMi4xNzE2IDE5IDMxLjUgMTguMzI4NCAzMS41IDE3LjVDMzEuNSAxNi42NzE2IDMyLjE3MTYgMTYgMzMgMTZaIiBmaWxsPSIjMzMzIi8+CjxwYXRoIGQ9Ik0yNCAxOEMyNy4zMTM3IDE4IDMwIDE1LjMxMzcgMzAgMTJIMThDMTggMTUuMzEzNyAyMC42ODYzIDE4IDI0IDE4WiIgZmlsbD0iI0U1RTVFNSIvPgo8cGF0aCBkPSJNMzAgMTJIMThDMTggMTUuMzEzNyAyMC42ODYzIDE4IDI0IDE4QzI3LjMxMzcgMTggMzAgMTUuMzEzNyAzMCAxMloiIGZpbGw9IiM0QkI3RkYiLz4KPHBhdGggZD0iTTI0IDMwQzI3LjMxMzcgMzAgMzAgMjcuMzEzNyAzMCAyNEgxOEMxOCAyNy4zMTM3IDIwLjY4NjMgMzAgMjQgMzBaIiBmaWxsPSIjRTVFNUU1Ii8+CjxwYXRoIGQ9Ik0zMCAyNEgxOEMxOCAyNy4zMTM3IDIwLjY4NjMgMzAgMjQgMzBDMjcuMzEzNyAzMCAzMCAyNy4zMTM3IDMwIDI0WiIgZmlsbD0iIzRCQjdGRiIvPgo8cGF0aCBkPSJNMTIgMjlIMTVDMTUuODI4NCAyOSAxNi41IDI5LjY3MTYgMTYuNSAzMC41QzE2LjUgMzEuMzI4NCAxNS44Mjg0IDMyIDE1IDMySDEyQzExLjE3MTYgMzIgMTAuNSAzMS4zMjg0IDEwLjUgMzAuNUMxMC41IDI5LjY3MTYgMTEuMTcxNiAyOSAxMiAyOVoiIGZpbGw9IiMzMzMiLz4KPHBhdGggZD0iTTMzIDI5SDM2QzM2LjgyODQgMjkgMzcuNSAyOS42NzE2IDM3LjUgMzAuNUMzNy41IDMxLjMyODQgMzYuODI4NCAzMiAzNiAzMkgzM0MzMi4xNzE2IDMyIDMxLjUgMzEuMzI4NCAzMS41IDMwLjVDMzEuNSAyOS42NzE2IDMyLjE3MTYgMjkgMzMgMjlaIiBmaWxsPSIjMzMzIi8+CjxwYXRoIGQ9Ik0yNCAzNkMyNC44Mjg0IDM2IDI1LjUgMzYuNjcxNiAyNS41IDM3LjVWMzguNUMyNS41IDM5LjMyODQgMjQuODI4NCA0MCAyNCA0MEMyMy4xNzE2IDQwIDIyLjUgMzkuMzI4NCAyMi41IDM4LjVWMzcuNUMyMi41IDM2LjY3MTYgMjMuMTcxNiAzNiAyNCAzNloiIGZpbGw9IiMzMzMiLz4KPHBhdGggZD0iTTI0IDZDMjQuODI4NCA2IDI1LjUgNi42NzE1NyAyNS41IDcuNVYxMC41QzI1LjUgMTEuMzI4NCAyNC44Mjg0IDEyIDI0IDEyQzIzLjE3MTYgMTIgMjIuNSAxMS4zMjg0IDIyLjUgMTAuNVY3LjVDMjIuNSA2LjY3MTU3IDIzLjE3MTYgNiAyNCA2WiIgZmlsbD0iIzMzMyIvPgo8cGF0aCBkPSJNMTIgMTZIMTVDMTUuODI4NCAxNiAxNi41IDE2LjY3MTYgMTYuNSAxNy41QzE2LjUgMTguMzI4NCAxNS44Mjg0IDE5IDE1IDE5SDEyQzExLjE3MTYgMTkgMTAuNSAxOC4zMjg0IDEwLjUgMTcuNUMxMC41IDE2LjY3MTYgMTEuMTcxNiAxNiAxMiAxNloiIGZpbGw9IiMzMzMiLz4KPHBhdGggZD0iTTMzIDE2SDM2QzM2LjgyODQgMTYgMzcuNSAxNi42NzE2IDM3LjUgMTcuNUMzNy41IDE4LjMyODQgMzYuODI4NCAxOSAzNiAxOUgzM0MzMi4xNzE2IDE5IDMxLjUgMTguMzI4NCAzMS41IDE3LjVDMzEuNSAxNi42NzE2IDMyLjE3MTYgMTYgMzMgMTZaIiBmaWxsPSIjMzMzIi8+CjxwYXRoIGQ9Ik0yNCAxOEMyNy4zMTM3IDE4IDMwIDE1LjMxMzcgMzAgMTJIMThDMTggMTUuMzEzNyAyMC42ODYzIDE4IDI0IDE4WiIgZmlsbD0iI0U1RTVFNSIvPgo8cGF0aCBkPSJNMzAgMTJIMThDMTggMTUuMzEzNyAyMC42ODYzIDE4IDI0IDE4QzI3LjMxMzcgMTggMzAgMTUuMzEzNyAzMCAxMloiIGZpbGw9IiM0QkI3RkYiLz4KPHBhdGggZD0iTTI0IDMwQzI3LjMxMzcgMzAgMzAgMjcuMzEzNyAzMCAyNEgxOEMxOCAyNy4zMTM3IDIwLjY4NjMgMzAgMjQgMzBaIiBmaWxsPSIjRTVFNUU1Ii8+CjxwYXGggZD0iTTMwIDI0SDE4QzE4IDI3LjMxMzcgMjAuNjg2MyAzMCAyNCAzMEMyNy4zMTM3IDMwIDMwIDI3LjMxMzcgMzAgMjRaIiBmaWxsPSIjNEJCN0ZGIi8+CjxwYXRoIGQ9Ik0xMiAyOUgxNUMxNS44Mjg0IDI5IDE2LjUgMjkuNjcxNiAxNi41IDMwLjVDMTYuNSAzMS4zMjg0IDE1LjgyODQgMzIgMTUgMzJIMTJDMTEuMTcxNiAzMiAxMC41IDMxLjMyODQgMTAuNSAzMC41QzEwLjUgMjkuNjcxNiAxMS4xNzE2IDI5IDEyIDI5WiIgZmlsbD0iIzMzMyIvPgo8cGF0aCBkPSJNMzMgMjlIMzZDMzYuODI4NCAyOSAzNy41IDI5LjY3MTYgMzcuNSAzMC41QzM3LjUgMzEuMzI4NCAzNi44Mjg0IDMyIDM2IDMySDMzQzMyLjE3MTYgMzIgMzEuNSAzMS4zMjg0IDMxLjUgMzAuNUMzMS41IDI5LjY3MTYgMzIuMTcxNiAyOSAzMyAyOVoiIGZpbGw9IiMzMzMiLz4KPHBhdGggZD0iTTI0IDM2QzI0LjgyODQgMzYgMjUuNSAzNi42NzE2IDI1LjUgMzcuNVYzOC41QzI1LjUgMzkuMzI4NCAyNC44Mjg0IDQwIDI0IDQwQzIzLjE3MTYgNDAgMjIuNSAzOS4zMjg0IDIyLjUgMzguNVYzNy41QzIyLjUgMzYuNjcxNiAyMy4xNzE2IDM2IDI0IDM2WiIgZmlsbD0iIzMzMyIvPgo8L3N2Zz4K',
+                iconSize: [30, 30],
+                iconAnchor: [15, 15]
+            });
+            
+            // Add drone marker
+            droneMarker = L.marker(map.getCenter(), {icon: droneIcon}).addTo(map);
+            droneMarker.bindPopup("Drone Position").openPopup();
+            
+            // Add event listeners
+            map.on('click', onMapClick);
+            map.on('mousemove', updateCoordinatesStatus);
+            map.on('zoomend', updateZoomLevel);
+            
+            // Update UI elements
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
+            setInterval(updateCompass, 100);
+            
+            // Simulate GPS movement if enabled
+            setInterval(simulateGPSMovement, 3000);
+            
+            // Add initial log entry
+            addLogEntry("Application initialized successfully");
+            addLogEntry("Map centered at " + map.getCenter().toString());
+        }
+        
+        // Handle map click (add waypoint)
+        function onMapClick(e) {
+            const altitude = document.getElementById('altitude').value;
+            const newWaypoint = {
+                lat: e.latlng.lat,
+                lng: e.latlng.lng,
+                alt: altitude
+            };
+            
+            waypoints.push(newWaypoint);
+            updateWaypointList();
+            
+            // Add marker to map
+            L.marker([newWaypoint.lat, newWaypoint.lng])
+                .addTo(map)
+                .bindPopup(`Waypoint ${waypoints.length}<br>Lat: ${newWaypoint.lat.toFixed(6)}<br>Lon: ${newWaypoint.lng.toFixed(6)}<br>Alt: ${newWaypoint.alt}m`);
+            
+            addLogEntry(`Added waypoint ${waypoints.length} at (${newWaypoint.lat.toFixed(6)}, ${newWaypoint.lng.toFixed(6)})`);
+        }
+        
+        // Update waypoint list in UI
+        function updateWaypointList() {
+            const waypointList = document.getElementById('waypointList');
+            
+            if (waypoints.length === 0) {
+                waypointList.innerHTML = '<p>No waypoints added yet. Click on the map to add waypoints.</p>';
+                return;
+            }
+            
+            let html = '';
+            waypoints.forEach((wp, index) => {
+                html += `
+                <div class="waypoint-item">
+                    <div>${index + 1}. Lat: ${wp.lat.toFixed(6)}, Lon: ${wp.lng.toFixed(6)}, Alt: ${wp.alt}m</div>
+                    <button onclick="removeWaypoint(${index})">Remove</button>
+                </div>
+                `;
+            });
+            
+            waypointList.innerHTML = html;
+        }
+        
+        // Remove a waypoint
+        function removeWaypoint(index) {
+            waypoints.splice(index, 1);
+            updateWaypointList();
+            addLogEntry(`Removed waypoint ${index + 1}`);
+        }
+        
+        // Clear all waypoints
+        function clearWaypoints() {
+            waypoints = [];
+            updateWaypointList();
+            addLogEntry("Cleared all waypoints");
+        }
+        
+        // Generate flight path
+        function generatePath() {
+            if (waypoints.length < 2) {
+                addLogEntry("Error: Need at least 2 waypoints to generate a path");
+                alert("You need at least 2 waypoints to generate a flight path.");
+                return;
+            }
+            
+            // Clear existing path if any
+            if (flightPath) {
+                map.removeLayer(flightPath);
+            }
+            
+            // Create latlng array for the path
+            const latlngs = waypoints.map(wp => [wp.lat, wp.lng]);
+            
+            // Create polyline
+            flightPath = L.polyline(latlngs, {color: 'blue'}).addTo(map);
+            
+            addLogEntry(`Generated flight path with ${waypoints.length} waypoints`);
+        }
+        
+        // Simulate flight along the path
+        function simulateFlight() {
+            if (waypoints.length < 2 || !flightPath) {
+                addLogEntry("Error: Generate a flight path first");
+                alert("Please generate a flight path first.");
+                return;
+            }
+            
+            if (isSimulating) {
+                // Stop simulation
+                clearInterval(simulationInterval);
+                isSimulating = false;
+                addLogEntry("Flight simulation stopped");
+                return;
+            }
+            
+            // Start simulation
+            isSimulating = true;
+            currentSimulationIndex = 0;
+            
+            addLogEntry("Starting flight simulation");
+            
+            simulationInterval = setInterval(() => {
+                if (currentSimulationIndex >= waypoints.length) {
+                    clearInterval(simulationInterval);
+                    isSimulating = false;
+                    addLogEntry("Flight simulation completed");
+                    return;
+                }
+                
+                const wp = waypoints[currentSimulationIndex];
+                droneMarker.setLatLng([wp.lat, wp.lng]);
+                
+                // Update compass heading (simulated)
+                if (currentSimulationIndex > 0) {
+                    const prevWp = waypoints[currentSimulationIndex - 1];
+                    const dx = wp.lng - prevWp.lng;
+                    const dy = wp.lat - prevWp.lat;
+                    compassHeading = (Math.atan2(dy, dx) * 180 / Math.PI + 360) % 360;
+                }
+                
+                currentSimulationIndex++;
+            }, 1000);
+        }
+        
+        // Export coordinates
+        function exportCoordinates() {
+            if (waypoints.length === 0) {
+                addLogEntry("Error: No waypoints to export");
+                alert("No waypoints to export.");
+                return;
+            }
+            
+            let exportText = "Waypoint Coordinates:\n";
+            waypoints.forEach((wp, index) => {
+                exportText += `${index + 1}. ${wp.lat.toFixed(6)}, ${wp.lng.toFixed(6)}, ${wp.alt}m\n`;
+            });
+            
+            document.getElementById('exportData').textContent = exportText;
+            document.getElementById('exportModal').style.display = 'flex';
+            
+            addLogEntry("Exported waypoint coordinates");
+        }
+        
+        // Show firmware code
+        function showFirmware() {
+            if (waypoints.length === 0) {
+                addLogEntry("Error: No waypoints to generate firmware code");
+                alert("No waypoints to generate firmware code.");
+                return;
+            }
+            
+            let code = "// Drone Flight Path Firmware Code\n";
+            code += "// Generated automatically\n\n";
+            code += "#include <DroneNavigation.h>\n\n";
+            code += "Waypoint flightPath[] = {\n";
+            
+            waypoints.forEach(wp => {
+                code += `    {${wp.lat.toFixed(6)}f, ${wp.lng.toFixed(6)}f, ${wp.alt}f},\n`;
+            });
+            
+            code += "};\n\n";
+            code += "void setup() {\n";
+            code += "    Drone.init();\n";
+            code += "    Drone.setFlightPath(flightPath, " + waypoints.length + ");\n";
+            code += "    Drone.takeOff();\n";
+            code += "}\n\n";
+            code += "void loop() {\n";
+            code += "    Drone.followFlightPath();\n";
+            code += "}\n";
+            
+            document.getElementById('firmwareCode').value = code;
+            document.getElementById('firmwareModal').style.display = 'flex';
+            
+            addLogEntry("Generated firmware code");
+        }
+        
+        // Update compass display
+        function updateCompass() {
+            document.getElementById('compassNeedle').style.transform = 
+                `translateX(-50%) rotate(${compassHeading}deg)`;
+        }
+        
+        // Update date and time display
+        function updateDateTime() {
+            const now = new Date();
+            document.getElementById('currentDateTime').textContent = now.toLocaleString();
+        }
+        
+        // Update coordinates status bar
+        function updateCoordinatesStatus(e) {
+            document.getElementById('coordinatesStatus').textContent = 
+                `Lat: ${e.latlng.lat.toFixed(6)}, Lon: ${e.latlng.lng.toFixed(6)}`;
+        }
+        
+        // Update zoom level status
+        function updateZoomLevel() {
+            document.getElementById('zoomLevel').textContent = `Zoom: ${map.getZoom()}`;
+        }
+        
+        // Add entry to activity log
+        function addLogEntry(message) {
+            const log = document.getElementById('activityLog');
+            const now = new Date();
+            const timestamp = now.toLocaleTimeString();
+            log.innerHTML += `[${timestamp}] ${message}\n`;
+            log.scrollTop = log.scrollHeight;
+        }
+        
+        // Clear activity log
+        function clearLog() {
+            document.getElementById('activityLog').innerHTML = '';
+            addLogEntry("Log cleared");
+        }
+        
+        // Save log to file
+        function saveLog() {
+            addLogEntry("Activity log saved");
+            alert("Activity log saved (simulated)");
+        }
+        
+        // Set current position as origin
+        function setOrigin() {
+            const center = map.getCenter();
+            addLogEntry(`Set origin to: ${center.lat.toFixed(6)}, ${center.lng.toFixed(6)}`);
+            alert(`Origin set to: ${center.lat.toFixed(6)}, ${center.lng.toFixed(6)}`);
+        }
+        
+        // Center map on drone position
+        function centerOnDrone() {
+            map.setView(droneMarker.getLatLng());
+            addLogEntry("Map centered on drone position");
+        }
+        
+        // Switch between tabs
+        function switchTab(tabId) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Deactivate all tab buttons
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Activate selected tab
+            document.getElementById(tabId).classList.add('active');
+            
+            // Find and activate the corresponding tab button
+            document.querySelectorAll('.tab').forEach(tab => {
+                if (tab.textContent.toLowerCase().includes(tabId.split('-')[0])) {
+                    tab.classList.add('active');
+                }
+            });
+        }
+        
+        // Close modal
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+        
+        // Copy firmware code to clipboard
+        function copyFirmware() {
+            const codeTextarea = document.getElementById('firmwareCode');
+            codeTextarea.select();
+            document.execCommand('copy');
+            addLogEntry("Firmware code copied to clipboard");
+        }
+        
+        // Copy export data to clipboard
+        function copyExportData() {
+            const exportData = document.getElementById('exportData');
+            const range = document.createRange();
+            range.selectNode(exportData);
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(range);
+            document.execCommand('copy');
+            addLogEntry("Export data copied to clipboard");
+        }
+        
+        // Save export data to file
+        function saveExportData() {
+            addLogEntry("Export data saved to file");
+            alert("Export data saved to file (simulated)");
+        }
+        
+        // Simulate GPS movement
+        function simulateGPSMovement() {
+            if (!document.getElementById('simulateGPS').checked) return;
+            
+            const currentPos = droneMarker.getLatLng();
+            const latChange = (Math.random() - 0.5) * 0.001;
+            const lngChange = (Math.random() - 0.5) * 0.001;
+            
+            const newLat = currentPos.lat + latChange;
+            const newLng = currentPos.lng + lngChange;
+            
+            droneMarker.setLatLng([newLat, newLng]);
+            
+            document.getElementById('currentCoords').textContent = 
+                `Lat: ${newLat.toFixed(6)}, Lon: ${newLng.toFixed(6)}`;
+        }
+        
+        // Download map area
+        function downloadMapArea() {
+            document.getElementById('downloadMapModal').style.display = 'flex';
+        }
+        
+        // Confirm map download
+        function confirmDownloadMap() {
+            const lat = parseFloat(document.getElementById('centerLat').value);
+            const lng = parseFloat(document.getElementById('centerLon').value);
+            const radius = parseInt(document.getElementById('downloadRadius').value);
+            const zoom = parseInt(document.getElementById('downloadZoom').value);
+            
+            addLogEntry(`Downloading map area: (${lat}, ${lng}), radius: ${radius}km, zoom: ${zoom}`);
+            alert(`Map download started for area around (${lat}, ${lng}) with ${radius}km radius at zoom level ${zoom} (simulated)`);
+            
+            closeModal('downloadMapModal');
+        }
+        
+        // Menu functions
+        function saveProject() {
+            addLogEntry("Project saved");
+            alert("Project saved (simulated)");
+        }
+        
+        function loadProject() {
+            addLogEntry("Project loaded");
+            alert("Project loaded (simulated)");
+        }
+        
+        function exitApp() {
+            addLogEntry("Application exit");
+            alert("Application would exit now (simulated)");
+        }
+        
+        function undo() {
+            addLogEntry("Undo last action");
+        }
+        
+        function redo() {
+            addLogEntry("Redo last action");
+        }
+        
+        function showSettings() {
+            switchTab('settings-tab');
+        }
+        
+        function refreshMap() {
+            map.invalidateSize();
+            addLogEntry("Map refreshed");
+        }
+        
+        function toggleOnlineMode() {
+            const onlineMode = document.getElementById('onlineMode').checked;
+            document.getElementById('onlineMode').checked = !onlineMode;
+            document.getElementById('mapMode').textContent = `Mode: ${!onlineMode ? 'Online' : 'Offline'}`;
+            addLogEntry(`Switched to ${!onlineMode ? 'online' : 'offline'} mode`);
+        }
+        
+        function clearAllData() {
+            waypoints = [];
+            updateWaypointList();
+            if (flightPath) {
+                map.removeLayer(flightPath);
+                flightPath = null;
+            }
+            clearLog();
+            addLogEntry("All data cleared");
+        }
+        
+        function exportAllData() {
+            addLogEntry("All data exported");
+            alert("All data exported (simulated)");
+        }
+        
+        function showAbout() {
+            addLogEntry("Showing about information");
+            alert("Drone Flight Path Generator v1.0\nHTML5 Conversion Example\n© 2023");
+        }
+        
+        function saveAzureKey() {
+            addLogEntry("Azure Maps key saved");
+            alert("Azure Maps key saved (simulated)");
+        }
+        
+        function clearCache() {
+            addLogEntry("Cache cleared");
+            alert("Cache cleared (simulated)");
+        }
+        
+        function resetSettings() {
+            addLogEntry("Settings reset to defaults");
+            alert("Settings reset to defaults (simulated)");
+        }
+        
+        // Initialize the application when the page loads
+        window.onload = init;
+    </script>
+</body>
+</html>

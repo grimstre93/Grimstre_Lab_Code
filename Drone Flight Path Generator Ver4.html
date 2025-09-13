@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drone Flight Path Generator</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            background-color: #f5f5f5;
+        }
+        
+        header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .map-container {
+            flex: 7;
+            position: relative;
+        }
+        
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .controls-container {
+            flex: 3;
+            display: flex;
+            flex-direction: column;
+            background-color: white;
+            border-left: 1px solid #ddd;
+            overflow-y: auto;
+            min-width: 350px;
+        }
+        
+        .control-section {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .control-section h3 {
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        
+        button {
+            padding: 8px 12px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        button.danger {
+            background-color: #e74c3c;
+        }
+        
+        button.danger:hover {
+            background-color: #c0392b;
+        }
+        
+        button.success {
+            background-color: #2ecc71;
+        }
+        
+        button.success:hover {
+            background-color: #27ae60;
+        }
+        
+        select, input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .log-container {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            border-top: 1px solid #eee;
+        }
+        
+        .log-container h3 {
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        
+        #activityLog {
+            height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            background-color: #f9f9f9;
+        }
+        
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 15px;
+            background-color: #34495e;
+            color: white;
+            font-size: 14px;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .close {
+            font-size: 24px;
+            cursor: pointer;
+        }
+        
+        .waypoint-list {
+            margin: 15px 0;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            padding: 10px;
+        }
+        
+        .waypoint-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .compass {
+            width: 150px;
+            height: 150px;
+            border: 2px solid #2c3e50;
+            border-radius: 50%;
+            position: relative;
+            margin: 0 auto;
+            background-color: #f8f8f8;
+        }
+        
+        .compass-needle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 2px;
+            height: 40%;
+            background-color: red;
+            transform-origin: bottom center;
+            transform: translateX(-50%) rotate(0deg);
+        }
+        
+        .compass-label {
+            position: absolute;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .compass-n { top: 5px; left: 50%; transform: translateX(-50%); }
+        .compass-e { top: 50%; right: 5px; transform: translateY(-50%); }
+        .compass-s { bottom: 5px; left: 50%; transform: translateX(-50%); }
+        .compass-w { top: 50%; left: 5px; transform: translateY(-50%); }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .menu-bar {
+            display: flex;
+            background-color: #34495e;
+            padding: 0 10px;
+        }
+        
+        .menu-item {
+            padding: 8px 15px;
+            color: white;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .menu-item:hover {
+            background-color: #2c3e50;
+        }
+        
+        .submenu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 100;
+            min-width: 150px;
+        }
+        
+        .menu-item:hover .submenu {
+            display: block;
+        }
+        
+        .submenu-item {
+            padding: 10px 15px;
+            color: #333;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        
+        .submenu-item:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .tab-container {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .tab {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+        
+        .tab.active {
+            border-bottom-color: #3498db;
+            color: #3498db;
+        }
+        
+        .tab-content {
+            padding: 15px;
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .manual-section {
+            margin-bottom: 20px;
+        }
+        
+        .manual-section h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .manual-section ol, .manual-section ul {
+            margin-left: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .manual-section li {
+            margin-bottom: 8px;
+        }
+        
+        @media (max-width: 992px) {
+            .main-container {
+                flex-direction: column;
+            }
+            
+            .controls-container {
+                border-left: none;
+                border-top: 1px solid #ddd;
+                max-height: 40vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Drone Flight Path Generator</h1>
+        <div class="header-controls">
+            <div id="gpsStatus">GPS: Acquiring signal...</div>
+            <div id="currentDateTime"></div>
+        </div>
+    </header>
+    
+    <div class="menu-bar">
+        <div class="menu-item">FILE
+            <div class="submenu">
+                <div class="submenu-item" onclick="saveProject()">Save Project</div>
+                <div class="submenu-item" onclick="loadProject()">Load Project</div>
+                <div class="submenu-item" onclick="exportProject()">Export Project</div>
+                <div class="submenu-item" onclick="exitApp()">Exit</div>
+            </div>
+        </div>
+        <div class="menu-item">EDIT
+            <div class="submenu">
+                <div class="submenu-item" onclick="undo()">Undo</div>
+                <div class="submenu-item" onclick="redo()">Redo</div>
+                <div class="submenu-item" onclick="showSettings()">Settings</div>
+            </div>
+        </div>
+        <div class="menu-item">VIEW
+            <div class="submenu">
+                <div class="submenu-item" onclick="refreshMap()">Refresh Map</div>
+                <div class="submenu-item" onclick="toggleOnlineMode()">Toggle Online Mode</div>
+                <div class="submenu-item" onclick="toggleSatelliteView()">Toggle Satellite View</div>
+                <div class="submenu-item" onclick="zoomToPath()">Zoom to Flight Path</div>
+            </div>
+        </div>
+        <div class="menu-item">DATA
+            <div class="submenu">
+                <div class="submenu-item" onclick="clearAllData()">Clear All Data</div>
+                <div class="submenu-item" onclick="exportAllData()">Export All Data</div>
+                <div class="submenu-item" onclick="importWaypoints()">Import Waypoints</div>
+                <div class="submenu-item" onclick="optimizePath()">Optimize Path</div>
+            </div>
+        </div>
+        <div class="menu-item">HELP
+            <div class="submenu">
+                <div class="submenu-item" onclick="showManual()">User Manual</div>
+                <div class="submenu-item" onclick="showAbout()">About</div>
+                <div class="submenu-item" onclick="checkUpdates()">Check for Updates</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="main-container">
+        <div class="map-container">
+            <div id="map"></div>
+        </div>
+        
+        <div class="controls-container">
+            <div class="tab-container">
+                <div class="tab active" onclick="switchTab('flight-tab')">Flight Planning</div>
+                <div class="tab" onclick="switchTab('compass-tab')">Compass & GPS</div>
+                <div class="tab" onclick="switchTab('settings-tab')">Settings</div>
+            </div>
+            
+            <div id="flight-tab" class="tab-content active">
+                <div class="control-section">
+                    <h3>Waypoints</h3>
+                    <div class="button-group">
+                        <button onclick="addWaypoint()">Add Waypoint</button>
+                        <button onclick="clearWaypoints()" class="danger">Clear All</button>
+                        <button onclick="reverseWaypoints()">Reverse Order</button>
+                    </div>
+                    
+                    <div class="waypoint-list" id="waypointList">
+                        <p>No waypoints added yet. Click on the map to add waypoints.</p>
+                    </div>
+                </div>
+                
+                <div class="control-section">
+                    <h3>Flight Path Settings</h3>
+                    <div class="form-group">
+                        <label for="altitude">Altitude (meters):</label>
+                        <input type="number" id="altitude" value="300" min="300">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="loopPath">
+                            Loop Path (don't return to origin)
+                        </label>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="pathStyle">Path Style:</label>
+                        <select id="pathStyle">
+                            <option value="straight">Straight Lines</option>
+                            <option value="curved">Curved Path</option>
+                            <option value="smooth">Smooth Curve</option>
+                        </select>
+                    </div>
+                    
+                    <div class="button-group">
+                        <button onclick="generatePath()" class="success">Generate Path</button>
+                        <button onclick="simulateFlight()">Simulate Flight</button>
+                    </div>
+                </div>
+                
+                <div class="control-section">
+                    <h3>Export Options</h3>
+                    <div class="form-group">
+                        <label for="exportMethod">Export Method:</label>
+                        <select id="exportMethod">
+                            <option>Display Only</option>
+                            <option>Save to File</option>
+                            <option>USB Transfer</option>
+                            <option>GPS Sync</option>
+                            <option>Memory Card</option>
+                            <option>Drone Firmware</option>
+                        </select>
+                    </div>
+                    
+                    <div class="button-group">
+                        <button onclick="exportCoordinates()">Export Coordinates</button>
+                        <button onclick="showFirmware()">Show Firmware Code</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="compass-tab" class="tab-content">
+                <div class="control-section">
+                    <h3>Compass</h3>
+                    <div class="compass">
+                        <div class="compass-needle" id="compassNeedle"></div>
+                        <div class="compass-label compass-n">N</div>
+                        <div class="compass-label compass-e">E</div>
+                        <div class="compass-label compass-s">S</div>
+                        <div class="compass-label compass-w">W</div>
+                    </div>
+                </div>
+                
+                <div class="control-section">
+                    <h3>GPS Coordinates</h3>
+                    <div class="form-group">
+                        <label>Current Position:</label>
+                        <div id="currentCoords">Lat: 0.046757, Lon: 37.654663</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Map Center:</label>
+                        <div id="mapCenterCoords">Lat: 0.046757, Lon: 37.654663</div>
+                    </div>
+                    
+                    <div class="button-group">
+                        <button onclick="setOrigin()">Set as Origin</button>
+                        <button onclick="centerOnDrone()">Center on Drone</button>
+                        <button onclick="getCurrentLocation()">Get My Location</button>
+                    </div>
+                </div>
+                
+                <div class="control-section">
+                    <h3>Distance Calculations</h3>
+                    <div class="form-group">
+                        <label>Total Path Distance:</label>
+                        <div id="totalDistance">0 km</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Estimated Flight Time:</label>
+                        <div id="flightTime">0 minutes</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="settings-tab" class="tab-content">
+                <div class="control-section">
+                    <h3>Map Settings</h3>
+                    <div class="form-group">
+                        <label for="azureKey">Azure Maps Key:</label>
+                        <input type="password" id="azureKey" placeholder="Enter your Azure Maps key">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="mapProvider">Map Provider:</label>
+                        <select id="mapProvider">
+                            <option value="osm">OpenStreetMap</option>
+                            <option value="satellite">Satellite Imagery</option>
+                            <option value="terrain">Terrain Map</option>
+                        </select>
+                    </div>
+                    
+                    <div class="button-group">
+                        <button onclick="saveAzureKey()">Save Key</button>
+                        <button onclick="downloadMapArea()">Download Map Area</button>
+                    </div>
+                </div>
+                
+                <div class="control-section">
+                    <h3>Application Settings</h3>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="onlineMode" checked>
+                            Online Mode
+                        </label>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="autoSave" checked>
+                            Auto-Save Projects
+                        </label>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="units">Measurement Units:</label>
+                        <select id="units">
+                            <option value="metric">Metric (meters, km)</option>
+                            <option value="imperial">Imperial (feet, miles)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="button-group">
+                        <button onclick="clearCache()">Clear Cache</button>
+                        <button onclick="resetSettings()">Reset to Defaults</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="log-container">
+                <h3>Activity Log</h3>
+                <div id="activityLog"></div>
+                <div class="button-group">
+                    <button onclick="clearLog()">Clear Log</button>
+                    <button onclick="saveLog()">Save Log</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="status-bar">
+        <div id="statusMessage">Ready to create flight paths</div>
+        <div id="coordinates">Lat: 0.000000, Lon: 0.000000</div>
+    </div>
+    
+    <!-- Modal for About and Manual -->
+    <div id="aboutModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">About</h2>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <div id="modalContent">
+                <!-- Content will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script>
+        // Initialize variables
+        let map;
+        let waypoints = [];
+        let flightPath = null;
+        let droneMarker = null;
+        let dronePath = null;
+        let isSimulating = false;
+        let simulationInterval = null;
+        let currentSimulationIndex = 0;
+        let compassHeading = 0;
+        
+        // Initialize the map
+        function initMap() {
+            // Default coordinates (Nairobi, Kenya)
+            const defaultCoords = [0.046757, 37.654663];
+            
+            // Initialize the map
+            map = L.map('map').setView(defaultCoords, 13);
+            
+            // Add OpenStreetMap tiles
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+            
+            // Update coordinates on mouse move
+            map.on('mousemove', function(e) {
+                updateCoordinates(e.latlng);
+            });
+            
+            // Add waypoint on click
+            map.on('click', function(e) {
+                addWaypointAtPosition(e.latlng);
+            });
+            
+            // Update map center coordinates
+            map.on('move', function() {
+                updateMapCenterCoords();
+            });
+            
+            // Initialize compass animation
+            animateCompass();
+            
+            // Update date and time
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
+            
+            // Add sample waypoints for demonstration
+            addSampleWaypoints();
+            
+            // Log initial status
+            logActivity("Application initialized successfully");
+            updateStatus("Ready to create flight paths");
+        }
+        
+        // Add sample waypoints for demonstration
+        function addSampleWaypoints() {
+            const center = map.getCenter();
+            const samplePoints = [
+                [center.lat + 0.01, center.lng + 0.01],
+                [center.lat + 0.02, center.lng],
+                [center.lat + 0.01, center.lng - 0.01],
+                [center.lat, center.lng - 0.02]
+            ];
+            
+            samplePoints.forEach(point => {
+                const latlng = L.latLng(point[0], point[1]);
+                addWaypointAtPosition(latlng, true);
+            });
+            
+            generatePath();
+        }
+        
+        // Update current date and time display
+        function updateDateTime() {
+            const now = new Date();
+            document.getElementById('currentDateTime').textContent = now.toLocaleString();
+        }
+        
+        // Update coordinates display
+        function updateCoordinates(latlng) {
+            document.getElementById('coordinates').textContent = 
+                `Lat: ${latlng.lat.toFixed(6)}, Lon: ${latlng.lng.toFixed(6)}`;
+        }
+        
+        // Update map center coordinates display
+        function updateMapCenterCoords() {
+            const center = map.getCenter();
+            document.getElementById('mapCenterCoords').textContent = 
+                `Lat: ${center.lat.toFixed(6)}, Lon: ${center.lng.toFixed(6)}`;
+        }
+        
+        // Add a waypoint at the specified position
+        function addWaypointAtPosition(latlng, isSample = false) {
+            const marker = L.marker(latlng, {
+                draggable: true,
+                title: `Waypoint ${waypoints.length + 1}`
+            }).addTo(map);
+            
+            marker.bindPopup(`Waypoint ${waypoints.length + 1}<br>Lat: ${latlng.lat.toFixed(6)}<br>Lon: ${latlng.lng.toFixed(6)}`);
+            
+            waypoints.push({
+                latlng: latlng,
+                marker: marker
+            });
+            
+            updateWaypointList();
+            
+            if (!isSample) {
+                logActivity(`Added waypoint at (${latlng.lat.toFixed(6)}, ${latlng.lng.toFixed(6)})`);
+            }
+            
+            // Update path if we have at least 2 waypoints
+            if (waypoints.length >= 2) {
+                generatePath();
+            }
+        }
+        
+        // Update the waypoint list in the UI
+        function updateWaypointList() {
+            const waypointList = document.getElementById('waypointList');
+            
+            if (waypoints.length === 0) {
+                waypointList.innerHTML = '<p>No waypoints added yet. Click on the map to add waypoints.</p>';
+                return;
+            }
+            
+            let html = '';
+            waypoints.forEach((wp, index) => {
+                html += `
+                <div class="waypoint-item">
+                    <div>Waypoint ${index + 1}</div>
+                    <div>
+                        <button onclick="removeWaypoint(${index})">Remove</button>
+                        <button onclick="centerOnWaypoint(${index})">View</button>
+                    </div>
+                </div>`;
+            });
+            
+            waypointList.innerHTML = html;
+        }
+        
+        // Remove a waypoint
+        function removeWaypoint(index) {
+            if (index >= 0 && index < waypoints.length) {
+                map.removeLayer(waypoints[index].marker);
+                waypoints.splice(index, 1);
+                updateWaypointList();
+                generatePath();
+                logActivity(`Removed waypoint ${index + 1}`);
+            }
+        }
+        
+        // Center map on a waypoint
+        function centerOnWaypoint(index) {
+            if (index >= 0 && index < waypoints.length) {
+                map.setView(waypoints[index].latlng, 15);
+                logActivity(`Centered on waypoint ${index + 1}`);
+            }
+        }
+        
+        // Clear all waypoints
+        function clearWaypoints() {
+            waypoints.forEach(wp => {
+                map.removeLayer(wp.marker);
+            });
+            
+            waypoints = [];
+            
+            if (flightPath) {
+                map.removeLayer(flightPath);
+                flightPath = null;
+            }
+            
+            updateWaypointList();
+            logActivity("Cleared all waypoints");
+        }
+        
+        // Reverse waypoints order
+        function reverseWaypoints() {
+            if (waypoints.length > 0) {
+                waypoints.reverse();
+                updateWaypointList();
+                generatePath();
+                logActivity("Reversed waypoint order");
+            }
+        }
+        
+        // Generate the flight path
+        function generatePath() {
+            // Remove existing flight path if any
+            if (flightPath) {
+                map.removeLayer(flightPath);
+            }
+            
+            if (waypoints.length < 2) {
+                updateStatus("Need at least 2 waypoints to generate a path");
+                return;
+            }
+            
+            // Create a latlng array from waypoints
+            const latlngs = waypoints.map(wp => wp.latlng);
+            
+            // Get path style
+            const pathStyle = document.getElementById('pathStyle').value;
+            
+            // Create the path based on style
+            if (pathStyle === 'straight') {
+                flightPath = L.polyline(latlngs, {color: 'blue'}).addTo(map);
+            } else if (pathStyle === 'curved') {
+                flightPath = L.curve(['M', latlngs[0]].concat(latlngs.slice(1).map(point => ['L', point])), {color: 'blue'}).addTo(map);
+            } else {
+                // Smooth curve (simplified)
+                flightPath = L.polyline(latlngs, {color: 'blue', smoothFactor: 1.0}).addTo(map);
+            }
+            
+            // Calculate total distance
+            let totalDistance = 0;
+            for (let i = 1; i < latlngs.length; i++) {
+                totalDistance += map.distance(latlngs[i-1], latlngs[i]);
+            }
+            
+            // Convert to km and update UI
+            totalDistance = (totalDistance / 1000).toFixed(2);
+            document.getElementById('totalDistance').textContent = `${totalDistance} km`;
+            
+            // Estimate flight time (assuming 10 m/s speed)
+            const flightTimeMinutes = Math.round(totalDistance * 1000 / 10 / 60);
+            document.getElementById('flightTime').textContent = `${flightTimeMinutes} minutes`;
+            
+            logActivity(`Generated ${pathStyle} flight path with ${waypoints.length} waypoints`);
+            updateStatus(`Flight path generated. Total distance: ${totalDistance} km`);
+        }
+        
+        // Simulate the drone flight
+        function simulateFlight() {
+            if (waypoints.length < 2 || !flightPath) {
+                updateStatus("Generate a flight path first");
+                return;
+            }
+            
+            if (isSimulating) {
+                // Stop simulation
+                clearInterval(simulationInterval);
+                isSimulating = false;
+                document.querySelector('button[onclick="simulateFlight()"]').textContent = 'Simulate Flight';
+                logActivity("Flight simulation stopped");
+                return;
+            }
+            
+            // Start simulation
+            isSimulating = true;
+            document.querySelector('button[onclick="simulateFlight()"]').textContent = 'Stop Simulation';
+            
+            // Remove existing drone marker if any
+            if (droneMarker) {
+                map.removeLayer(droneMarker);
+            }
+            
+            if (dronePath) {
+                map.removeLayer(dronePath);
+            }
+            
+            // Create drone marker at first waypoint
+            droneMarker = L.marker(waypoints[0].latlng, {
+                icon: L.divIcon({
+                    className: 'drone-marker',
+                    html: '<div style="background-color: red; width: 20px; height: 20px; border-radius: 50%;"></div>',
+                    iconSize: [20, 20]
+                })
+            }).addTo(map);
+            
+            // Create path for drone flight
+            dronePath = L.polyline([], {color: 'red'}).addTo(map);
+            
+            // Start simulation
+            currentSimulationIndex = 0;
+            simulationInterval = setInterval(moveDrone, 500);
+            logActivity("Started flight simulation");
+        }
+        
+        // Move the drone along the path
+        function moveDrone() {
+            if (currentSimulationIndex >= waypoints.length) {
+                // Simulation complete
+                clearInterval(simulationInterval);
+                isSimulating = false;
+                document.querySelector('button[onclick="simulateFlight()"]').textContent = 'Simulate Flight';
+                logActivity("Flight simulation completed");
+                return;
+            }
+            
+            // Move to next waypoint
+            const target = waypoints[currentSimulationIndex].latlng;
+            droneMarker.setLatLng(target);
+            
+            // Add to drone path
+            dronePath.addLatLng(target);
+            
+            // Update compass heading if not at last point
+            if (currentSimulationIndex < waypoints.length - 1) {
+                const nextTarget = waypoints[currentSimulationIndex + 1].latlng;
+                compassHeading = calculateBearing(target, nextTarget);
+                updateCompass();
+            }
+            
+            // Update current coordinates
+            updateCoordinates(target);
+            
+            // Center map on drone
+            map.panTo(target);
+            
+            currentSimulationIndex++;
+        }
+        
+        // Calculate bearing between two points
+        function calculateBearing(start, end) {
+            const startLat = start.lat * Math.PI / 180;
+            const startLng = start.lng * Math.PI / 180;
+            const endLat = end.lat * Math.PI / 180;
+            const endLng = end.lng * Math.PI / 180;
+            
+            const y = Math.sin(endLng - startLng) * Math.cos(endLat);
+            const x = Math.cos(startLat) * Math.sin(endLat) -
+                      Math.sin(startLat) * Math.cos(endLat) * Math.cos(endLng - startLng);
+            const bearing = Math.atan2(y, x) * 180 / Math.PI;
+            return (bearing + 360) % 360;
+        }
+        
+        // Update compass display
+        function updateCompass() {
+            document.getElementById('compassNeedle').style.transform = 
+                `translateX(-50%) rotate(${compassHeading}deg)`;
+        }
+        
+        // Animate compass (for demo purposes)
+        function animateCompass() {
+            setInterval(() => {
+                if (!isSimulating) {
+                    compassHeading = (compassHeading + 0.5) % 360;
+                    updateCompass();
+                }
+            }, 100);
+        }
+        
+        // Add a waypoint (from button)
+        function addWaypoint() {
+            updateStatus("Click on the map to add a waypoint");
+            logActivity("Awaiting user click to add waypoint");
+        }
+        
+        // Switch between tabs
+        function switchTab(tabId) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Deactivate all tab buttons
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Activate selected tab
+            document.getElementById(tabId).classList.add('active');
+            
+            // Activate the button that was clicked
+            event.currentTarget.classList.add('active');
+        }
+        
+        // Update status message
+        function updateStatus(message) {
+            document.getElementById('statusMessage').textContent = message;
+        }
+        
+        // Log activity
+        function logActivity(message) {
+            const log = document.getElementById('activityLog');
+            const timestamp = new Date().toLocaleTimeString();
+            log.innerHTML += `[${timestamp}] ${message}\n`;
+            log.scrollTop = log.scrollHeight;
+        }
+        
+        // Clear activity log
+        function clearLog() {
+            document.getElementById('activityLog').innerHTML = '';
+            logActivity("Activity log cleared");
+        }
+        
+        // Save log (placeholder)
+        function saveLog() {
+            logActivity("Save log functionality would be implemented here");
+            alert("Log saved functionality would be implemented in a full version");
+        }
+        
+        // Set current position as origin
+        function setOrigin() {
+            const center = map.getCenter();
+            map.setView(center, map.getZoom());
+            logActivity("Set current map center as origin");
+        }
+        
+        // Center on drone during simulation
+        function centerOnDrone() {
+            if (droneMarker) {
+                map.setView(droneMarker.getLatLng(), map.getZoom());
+                logActivity("Centered map on drone");
+            } else {
+                logActivity("No drone active to center on");
+            }
+        }
+        
+        // Get current location using geolocation API
+        function getCurrentLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    position => {
+                        const latlng = [position.coords.latitude, position.coords.longitude];
+                        map.setView(latlng, 15);
+                        logActivity(`Centered on your current location: ${position.coords.latitude.toFixed(6)}, ${position.coords.longitude.toFixed(6)}`);
+                    },
+                    error => {
+                        logActivity(`Geolocation error: ${error.message}`);
+                    }
+                );
+            } else {
+                logActivity("Geolocation is not supported by this browser");
+            }
+        }
+        
+        // Save Azure Maps key (placeholder)
+        function saveAzureKey() {
+            const key = document.getElementById('azureKey').value;
+            if (key) {
+                logActivity("Azure Maps key saved (this is a demo)");
+                alert("In a full implementation, the Azure Maps key would be saved securely");
+            } else {
+                logActivity("Please enter an Azure Maps key");
+            }
+        }
+        
+        // Download map area (placeholder)
+        function downloadMapArea() {
+            logActivity("Map area download would be implemented here");
+            alert("Map download functionality would be implemented in a full version");
+        }
+        
+        // Clear cache (placeholder)
+        function clearCache() {
+            logActivity("Cache cleared (this is a demo)");
+            alert("Cache cleared functionality would be implemented in a full version");
+        }
+        
+        // Reset settings (placeholder)
+        function resetSettings() {
+            logActivity("Settings reset to defaults (this is a demo)");
+            alert("Settings reset functionality would be implemented in a full version");
+        }
+        
+        // Show modal
+        function showModal(title, content) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalContent').innerHTML = content;
+            document.getElementById('aboutModal').style.display = 'flex';
+        }
+        
+        // Close modal
+        function closeModal() {
+            document.getElementById('aboutModal').style.display = 'none';
+        }
+        
+        // Show about information
+        function showAbout() {
+            const content = `
+                <h3>Drone Flight Path Generator</h3>
+                <p>Version 2.1.0</p>
+                <p>This application allows you to plan and visualize drone flight paths.</p>
+                <p>Features include:</p>
+                <ul>
+                    <li>Interactive map with waypoint placement</li>
+                    <li>Multiple path generation options</li>
+                    <li>Flight simulation with visual feedback</li>
+                    <li>Compass and GPS information</li>
+                    <li>Export functionality for various drone systems</li>
+                </ul>
+                <p>Created with Leaflet and modern web technologies.</p>
+                <p>&copy; 2023 Drone Flight Path Software</p>
+            `;
+            showModal('About', content);
+        }
+        
+        // Show user manual
+        function showManual() {
+            const content = `
+                <div class="manual-section">
+                    <h3>How to Use the Drone Flight Path Generator</h3>
+                    <p>This software helps you plan and visualize drone flight paths for various applications including mapping, surveillance, and photography.</p>
+                </div>
+                
+                <div class="manual-section">
+                    <h3>Getting Started</h3>
+                    <ol>
+                        <li>Allow the application to access your location for better accuracy (optional)</li>
+                        <li>Familiarize yourself with the interface:
+                            <ul>
+                                <li>Left side: Interactive map</li>
+                                <li>Right side: Controls and information panels</li>
+                                <li>Top menu: File operations and settings</li>
+                                <li>Bottom status bar: Coordinates and messages</li>
+                            </ul>
+                        </li>
+                        <li>Use the tabs to switch between different control panels</li>
+                    </ol>
+                </div>
+                
+                <div class="manual-section">
+                    <h3>Creating a Flight Path</h3>
+                    <ol>
+                        <li><strong>Add Waypoints</strong>: Click on the map to place waypoints. Each click adds a new waypoint to your path.</li>
+                        <li><strong>Adjust Waypoints</strong>: Drag waypoints to reposition them. The path will update automatically.</li>
+                        <li><strongConfigure Settings</strong>:
+                            <ul>
+                                <li>Set altitude for your flight path</li>
+                                <li>Choose whether to loop the path or return to origin</li>
+                                <li>Select path style (straight lines, curved, or smooth)</li>
+                            </ul>
+                        </li>
+                        <li><strong>Generate Path</strong>: Click "Generate Path" to create the flight path based on your waypoints and settings.</li>
+                        <li><strong>Simulate Flight</strong>: Use the "Simulate Flight" button to visualize how the drone would follow the path.</li>
+                    </ol>
+                </div>
+                
+                <div class="manual-section">
+                    <h3>Menu Functions</h3>
+                    <p><strong>File Menu:</strong></p>
+                    <ul>
+                        <li>Save Project: Save your current flight path</li>
+                        <li>Load Project: Open a previously saved flight path</li>
+                        <li>Export Project: Export your flight path to various formats</li>
+                        <li>Exit: Close the application</li>
+                    </ul>
+                    
+                    <p><strong>Edit Menu:</strong></p>
+                    <ul>
+                        <li>Undo/Redo: Reverse or reapply your last actions</li>
+                        <li>Settings: Configure application preferences</li>
+                    </ul>
+                    
+                    <p><strong>View Menu:</strong></p>
+                    <ul>
+                        <li>Refresh Map: Reload the map tiles</li>
+                        <li>Toggle Online Mode: Switch between online and offline maps</li>
+                        <li>Toggle Satellite View: Switch between map and satellite imagery</li>
+                        <li>Zoom to Path: Adjust the view to show the entire flight path</li>
+                    </ul>
+                    
+                    <p><strong>Data Menu:</strong></p>
+                    <ul>
+                        <li>Clear All Data: Remove all waypoints and paths</li>
+                        <li>Export All Data: Export waypoints and path information</li>
+                        <li>Import Waypoints: Load waypoints from a file</li>
+                        <li>Optimize Path: Automatically optimize the path for efficiency</li>
+                    </ul>
+                    
+                    <p><strong>Help Menu:</strong></p>
+                    <ul>
+                        <li>User Manual: This guide</li>
+                        <li>About: Information about the application</li>
+                        <li>Check for Updates: Look for newer versions</li>
+                    </ul>
+                </div>
+                
+                <div class="manual-section">
+                    <h3>Tips for Effective Flight Planning</h3>
+                    <ul>
+                        <li>Always check local regulations before flying drones</li>
+                        <li>Consider obstacles and no-fly zones when planning your path</li>
+                        <li>Account for battery life when planning long flights</li>
+                        <li>Use appropriate altitude for your mission objectives</li>
+                        <li>Test your flight path with simulation before actual flight</li>
+                    </ul>
+                </div>
+                
+                <div class="manual-section">
+                    <h3>Troubleshooting</h3>
+                    <p><strong>Map not loading:</strong> Check your internet connection and ensure you have a valid Azure Maps key if using satellite view.</p>
+                    <p><strong>Waypoints not appearing:</strong> Make sure you're clicking on the map view and not on controls.</p>
+                    <p><strong>Simulation not working:</strong> Generate a path first with at least two waypoints.</p>
+                    <p><strong>Inaccurate coordinates:</strong> Allow location access for more accurate positioning.</p>
+                </div>
+            `;
+            showModal('User Manual', content);
+        }
+        
+        // Menu functions
+        function saveProject() {
+            logActivity("Save project menu item selected");
+            alert("Project saved successfully (demo)");
+        }
+        
+        function loadProject() {
+            logActivity("Load project menu item selected");
+            alert("Project loaded successfully (demo)");
+        }
+        
+        function exportProject() {
+            logActivity("Export project menu item selected");
+            alert("Project exported successfully (demo)");
+        }
+        
+        function exitApp() {
+            logActivity("Exit application menu item selected");
+            alert("Application would close in a full implementation");
+        }
+        
+        function undo() {
+            logActivity("Undo menu item selected");
+            alert("Last action undone (demo)");
+        }
+        
+        function redo() {
+            logActivity("Redo menu item selected");
+            alert("Last action redone (demo)");
+        }
+        
+        function showSettings() {
+            logActivity("Settings menu item selected");
+            switchTab('settings-tab');
+        }
+        
+        function refreshMap() {
+            logActivity("Refresh map menu item selected");
+            map.invalidateSize();
+            alert("Map refreshed");
+        }
+        
+        function toggleOnlineMode() {
+            const onlineMode = document.getElementById('onlineMode').checked;
+            document.getElementById('onlineMode').checked = !onlineMode;
+            logActivity(`Online mode ${!onlineMode ? 'enabled' : 'disabled'}`);
+            alert(`Online mode ${!onlineMode ? 'enabled' : 'disabled'}`);
+        }
+        
+        function toggleSatelliteView() {
+            logActivity("Toggle satellite view menu item selected");
+            alert("Satellite view toggled (demo)");
+        }
+        
+        function zoomToPath() {
+            logActivity("Zoom to path menu item selected");
+            if (flightPath) {
+                map.fitBounds(flightPath.getBounds());
+                alert("Zoomed to flight path");
+            } else {
+                alert("Generate a flight path first");
+            }
+        }
+        
+        function clearAllData() {
+            logActivity("Clear all data menu item selected");
+            clearWaypoints();
+            alert("All data cleared");
+        }
+        
+        function exportAllData() {
+            logActivity("Export all data menu item selected");
+            alert("All data exported (demo)");
+        }
+        
+        function importWaypoints() {
+            logActivity("Import waypoints menu item selected");
+            alert("Waypoints imported (demo)");
+        }
+        
+        function optimizePath() {
+            logActivity("Optimize path menu item selected");
+            alert("Path optimized (demo)");
+        }
+        
+        function checkUpdates() {
+            logActivity("Check for updates menu item selected");
+            alert("You have the latest version");
+        }
+        
+        function exportCoordinates() {
+            logActivity("Export coordinates menu item selected");
+            alert("Coordinates exported (demo)");
+        }
+        
+        function showFirmware() {
+            logActivity("Show firmware code menu item selected");
+            alert("Firmware code displayed (demo)");
+        }
+        
+        // Initialize the application when the page loads
+        window.onload = initMap;
+    </script>
+</body>
+</html>

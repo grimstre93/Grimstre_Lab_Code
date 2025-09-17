@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UHURU MISSILE SHIELD</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Courier New', monospace;
+        }
+        
+        body {
+            background-color: #000;
+            color: #fff;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .pane {
+            height: 100%;
+            position: relative;
+        }
+        
+        .left-pane {
+            width: 50%;
+            border-right: 1px solid #333;
+        }
+        
+        .right-pane {
+            width: 50%;
+        }
+        
+        .radar-container, .map-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+        
+        canvas {
+            display: block;
+        }
+        
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .status-bar {
+            height: 80px;
+            background-color: #000;
+            border-top: 1px solid #333;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+        }
+        
+        .band-legend {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border: 1px solid #333;
+            border-radius: 5px;
+            z-index: 10;
+        }
+        
+        .band-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        
+        .band-color {
+            width: 12px;
+            height: 12px;
+            margin-right: 8px;
+        }
+        
+        .controls {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            display: flex;
+            gap: 10px;
+            z-index: 10;
+        }
+        
+        button {
+            background-color: #222;
+            color: #0f0;
+            border: 1px solid #0f0;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+        }
+        
+        button:hover {
+            background-color: #0f0;
+            color: #000;
+        }
+        
+        .sdr-panel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border: 1px solid #333;
+            border-radius: 5px;
+            width: 200px;
+            z-index: 1000;
+        }
+        
+        .sdr-control {
+            margin-bottom: 10px;
+        }
+        
+        .sdr-control label {
+            display: block;
+            margin-bottom: 3px;
+            font-size: 12px;
+            color: #0f0;
+        }
+        
+        .sdr-control input {
+            width: 100%;
+            background-color: #222;
+            border: 1px solid #0f0;
+            color: #0f0;
+            padding: 3px;
+        }
+        
+        .signal-display {
+            height: 60px;
+            background-color: #111;
+            border: 1px solid #333;
+            margin-top: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .signal-plot {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        h3 {
+            color: #0f0;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        
+        .notification {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(255, 0, 0, 0.7);
+            padding: 10px 20px;
+            border-radius: 5px;
+            display: none;
+            z-index: 1000;
+        }
+        
+        .map-overlay {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border: 1px solid #333;
+            border-radius: 5px;
+            z-index: 1000;
+        }
+        
+        .rocket-panel {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border: 1px solid #333;
+            border-radius: 5px;
+            width: 250px;
+            z-index: 1000;
+        }
+        
+        .rocket-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5px;
+            margin-top: 10px;
+        }
+        
+        .rocket-status {
+            margin-top: 10px;
+            font-size: 12px;
+        }
+        
+        .theodolite-panel {
+            position: absolute;
+            top: 200px;
+            right: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border: 1px solid #333;
+            border-radius: 5px;
+            width: 250px;
+            z-index: 1000;
+        }
+        
+        .calibration-data {
+            margin-top: 10px;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+        
+        .firmware-display {
+            position: absolute;
+            bottom: 180px;
+            left: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border: 1px solid #333;
+            border-radius: 5px;
+            width: 300px;
+            height: 150px;
+            overflow-y: auto;
+            z-index: 1000;
+            font-size: 10px;
+            line-height: 1.2;
+        }
+        
+        .coordinates-display {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 5px 10px;
+            border: 1px solid #333;
+            border-radius: 5px;
+            z-index: 1000;
+            font-size: 12px;
+            color: #0f0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="pane left-pane">
+            <div class="radar-container">
+                <canvas id="radarCanvas"></canvas>
+                <div class="band-legend">
+                    <h3>BAND PLAN</h3>
+                    <div id="bandList"></div>
+                </div>
+                <div class="controls">
+                    <button id="simulateBtn">Simulate Signal (SPACE)</button>
+                    <button id="resetBtn">Reset</button>
+                </div>
+                <div class="firmware-display">
+                    <h3>ROCKET FIRMWARE v2.1.5</h3>
+                    <div id="firmwareOutput">BOOTING UHURU SYSTEM...</div>
+                </div>
+            </div>
+        </div>
+        <div class="pane right-pane">
+            <div class="map-container">
+                <div id="map"></div>
+                <div class="coordinates-display">
+                    DEFENSE CENTER: 0.0468°N, 37.6547°E
+                </div>
+                <div class="sdr-panel">
+                    <h3>SDR CONTROLS</h3>
+                    <div class="sdr-control">
+                        <label for="frequency">Frequency (MHz)</label>
+                        <input type="range" id="frequency" min="0.15" max="3.8" step="0.01" value="1.0">
+                        <span id="frequencyValue">1.00 MHz</span>
+                    </div>
+                    <div class="sdr-control">
+                        <label for="gain">Gain</label>
+                        <input type="range" id="gain" min="0" max="100" value="80">
+                        <span id="gainValue">80%</span>
+                    </div>
+                    <div class="signal-display">
+                        <canvas id="signalCanvas" class="signal-plot"></canvas>
+                    </div>
+                </div>
+                <div class="rocket-panel">
+                    <h3>ROCKET BARREL SYSTEM</h3>
+                    <div class="rocket-controls">
+                        <button id="singleRocketBtn">Fire Single Rocket</button>
+                        <button id="burstRocketsBtn">Burst Fire (40 Rockets)</button>
+                    </div>
+                    <div class="rocket-status">
+                        <div>Rockets Available: <span id="rocketsAvailable">40</span></div>
+                        <div>Rockets Fired: <span id="rocketsFired">0</span></div>
+                    </div>
+                </div>
+                <div class="theodolite-panel">
+                    <h3>THEODOLITE CALIBRATION</h3>
+                    <button id="calibrateBtn">Calibrate Trajectory</button>
+                    <div class="calibration-data">
+                        <div>Distance: <span id="calDistance">0.0 km</span></div>
+                        <div>Azimuth: <span id="calAzimuth">0.0°</span></div>
+                        <div>Elevation: <span id="calElevation">0.0°</span></div>
+                        <div>Timer: <span id="calTimer">0.0s</span></div>
+                    </div>
+                </div>
+                <div class="map-overlay">
+                    <div>Zoom: <span id="zoom-level">5</span></div>
+                    <div>Center: <span id="map-center">0, 0</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="status-bar">
+        <div class="status-item" id="interferenceCount">Interferences: 0</div>
+        <div class="status-item" id="rocketCount">Rockets Launched: 0</div>
+        <div class="status-item">Press SPACE to simulate signal</div>
+    </div>
+    <div class="notification" id="notification">ROCKET LAUNCHED!</div>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script>
+        // Configuration
+        const WIDTH = 1200;
+        const HEIGHT = 800;
+        const LEFT_W = WIDTH / 2;
+        const RIGHT_W = WIDTH - LEFT_W;
+        const FPS = 60;
+        
+        // Radar settings
+        const DETECTION_RANGE = 500;    // km
+        const RADAR_RADIUS = Math.min(LEFT_W, HEIGHT) / 2 - 20;
+        const RADAR_CENTER = { x: LEFT_W / 2, y: HEIGHT / 2 };
+        const RADAR_SPEED = 0.03;
+        
+        // Map settings - Updated to the specified coordinates
+        const DEFENSE_CENTER = [0.046757, 37.654663]; // Latitude = 0.046757; Longitude = 37.654663
+        
+        // Rocket system
+        const MAX_ROCKETS = 40;
+        
+        // Colors
+        const BLACK = '#000000';
+        const WHITE = '#ffffff';
+        const GREEN = '#00ff00';
+        const RED = '#ff0000';
+        const YELLOW = '#ffff00';
+        const DARKGRAY = '#1e1e1e';
+        const LIGHTGRAY = '#646464';
+        const GRIDGRAY = '#323232';
+        
+        // Band plan
+        const BAND_PLAN = [
+            {min:150e3, max:280e3,  color:'#900000', mode:'AM',  name:'Longwave'},
+            {min:530e3, max:1.7e6,  color:'#900080', mode:'AM',  name:'Mediumwave'},
+            {min:1.8e6, max:2.0e6,  color:'#900080', mode:'LSB', name:'160m'},
+            {min:2.3e6, max:2.5e6,  color:'#900000', mode:'AM',  name:'Shortwave'},
+            {min:3.5e6, max:3.8e6,  color:'#900080', mode:'LSB', name:'80m'}
+        ];
+        
+        // State
+        let angle = 0.0;
+        let interferences = [];
+        let rockets_launched = 0;
+        let rockets_available = MAX_ROCKETS;
+        let lastFrameTime = 0;
+        let signalData = [];
+        let map;
+        let mapMarkers = [];
+        let calibrationData = {
+            distance: 0,
+            azimuth: 0,
+            elevation: 0,
+            timer: 0
+        };
+        
+        // Canvas setup
+        const radarCanvas = document.getElementById('radarCanvas');
+        const signalCanvas = document.getElementById('signalCanvas');
+        
+        radarCanvas.width = LEFT_W;
+        radarCanvas.height = HEIGHT;
+        
+        signalCanvas.width = 200;
+        signalCanvas.height = 60;
+        
+        const radarCtx = radarCanvas.getContext('2d');
+        const signalCtx = signalCanvas.getContext('2d');
+        
+        // Initialize map
+        function initMap() {
+            map = L.map('map', {
+                attributionControl: false,
+                zoomControl: false
+            }).setView(DEFENSE_CENTER, 7); // Zoom level adjusted for better view of the region
+            
+            // Add OpenStreetMap tile layer with dark theme
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 18,
+            }).addTo(map);
+            
+            // Add defense center marker
+            L.circleMarker(DEFENSE_CENTER, {
+                color: RED,
+                fillColor: YELLOW,
+                fillOpacity: 0.8,
+                radius: 8
+            }).addTo(map).bindPopup("UHURU DEFENSE CENTER<br>0.0468°N, 37.6547°E").openPopup();
+            
+            // Update map info
+            updateMapInfo();
+            
+            // Listen to map move events
+            map.on('move', updateMapInfo);
+        }
+        
+        // Update map information overlay
+        function updateMapInfo() {
+            const center = map.getCenter();
+            document.getElementById('zoom-level').textContent = map.getZoom();
+            document.getElementById('map-center').textContent = 
+                `${center.lat.toFixed(4)}, ${center.lng.toFixed(4)}`;
+        }
+        
+        // Convert radar coordinates to geographical coordinates
+        function radarToGeo(dist, ang) {
+            // Convert polar coordinates (distance in km, angle in radians) to geographical offset
+            const earthRadius = 6371; // Earth radius in km
+            const distRatio = dist / earthRadius;
+            const bearing = ang; // Bearing in radians from north
+            
+            // Defense center coordinates in radians
+            const defenseLat = DEFENSE_CENTER[0] * Math.PI / 180;
+            const defenseLon = DEFENSE_CENTER[1] * Math.PI / 180;
+            
+            // Calculate new latitude
+            const newLat = Math.asin(Math.sin(defenseLat) * Math.cos(distRatio) + 
+                            Math.cos(defenseLat) * Math.sin(distRatio) * Math.cos(bearing));
+            
+            // Calculate new longitude
+            const newLon = defenseLon + Math.atan2(Math.sin(bearing) * Math.sin(distRatio) * Math.cos(defenseLat),
+                            Math.cos(distRatio) - Math.sin(defenseLat) * Math.sin(newLat));
+            
+            // Convert back to degrees
+            return [
+                newLat * 180 / Math.PI,
+                newLon * 180 / Math.PI
+            ];
+        }
+        
+        // Initialize band legend
+        function initBandLegend() {
+            const bandList = document.getElementById('bandList');
+            bandList.innerHTML = '';
+            
+            BAND_PLAN.forEach(band => {
+                const bandItem = document.createElement('div');
+                bandItem.className = 'band-item';
+                
+                const colorBox = document.createElement('div');
+                colorBox.className = 'band-color';
+                colorBox.style.backgroundColor = band.color;
+                
+                const bandText = document.createElement('span');
+                bandText.style.fontSize = '12px';
+                bandText.style.color = WHITE;
+                bandText.textContent = `${band.name} (${band.mode})`;
+                
+                bandItem.appendChild(colorBox);
+                bandItem.appendChild(bandText);
+                bandList.appendChild(bandItem);
+            });
+        }
+        
+        // Format frequency
+        function formatFreq(f) {
+            if (f >= 1e6) {
+                return `${(f/1e6).toFixed(2)} MHz`;
+            }
+            if (f >= 1e3) {
+                return `${(f/1e3).toFixed(1)} kHz`;
+            }
+            return `${Math.round(f)} Hz`;
+        }
+        
+        // Generate interference
+        function genInterference() {
+            const b = BAND_PLAN[Math.floor(Math.random() * BAND_PLAN.length)];
+            const freq = Math.random() * (b.max - b.min) + b.min;
+            const strength = Math.random() * 0.5 + 0.5;
+            const dist = Math.random() * (DETECTION_RANGE - 50) + 50;
+            const ang = Math.random() * Math.PI * 2;
+            
+            return {
+                band: b,
+                freq: freq,
+                strength: strength,
+                dist: dist,
+                ang: ang,
+                time: Date.now(),
+                geoPos: radarToGeo(dist, ang)
+            };
+        }
+        
+        // Update map markers for interferences
+        function updateMapMarkers() {
+            // Clear existing markers
+            mapMarkers.forEach(marker => map.removeLayer(marker));
+            mapMarkers = [];
+            
+            // Add markers for each interference
+            interferences.forEach(itf => {
+                const marker = L.circleMarker(itf.geoPos, {
+                    color: itf.band.color,
+                    fillColor: itf.band.color,
+                    fillOpacity: 0.7,
+                    radius: 4 + 4 * itf.strength
+                }).addTo(map);
+                
+                // Add tooltip with frequency info
+                marker.bindTooltip(`${formatFreq(itf.freq)} - ${itf.band.name}`, {
+                    permanent: false,
+                    direction: 'top'
+                });
+                
+                mapMarkers.push(marker);
+            });
+        }
+        
+        // Launch rocket
+        function launchRocket(itf, manual = false) {
+            if (rockets_available <= 0) {
+                logToFirmware("WARNING: No rockets available!");
+                return;
+            }
+            
+            rockets_available--;
+            rockets_launched++;
+            
+            document.getElementById('rocketsAvailable').textContent = rockets_available;
+            document.getElementById('rocketsFired').textContent = rockets_launched;
+            document.getElementById('rocketCount').textContent = `Rockets Launched: ${rockets_launched}`;
+            
+            console.log(`ROCKET LAUNCHED at ${formatFreq(itf.freq)}, dist ${itf.dist.toFixed(1)} km`);
+            
+            // Create rocket trajectory line
+            const rocketLine = L.polyline([DEFENSE_CENTER, itf.geoPos], {
+                color: RED,
+                weight: 2,
+                dashArray: '5,10'
+            }).addTo(map);
+            
+            // Create explosion marker on map
+            const explosionMarker = L.circleMarker(itf.geoPos, {
+                color: RED,
+                fillColor: YELLOW,
+                fillOpacity: 0.8,
+                radius: 12
+            }).addTo(map);
+            
+            explosionMarker.bindPopup(`ROCKET IMPACT!<br>Frequency: ${formatFreq(itf.freq)}`).openPopup();
+            
+            // Show notification
+            const notification = document.getElementById('notification');
+            notification.textContent = `ROCKET LAUNCHED at ${formatFreq(itf.freq)}!`;
+            notification.style.display = 'block';
+            
+            // Log to firmware
+            logToFirmware(`ROCKET #${MAX_ROCKETS - rockets_available} LAUNCHED`);
+            logToFirmware(`TARGET: ${formatFreq(itf.freq)}`);
+            logToFirmware(`DISTANCE: ${itf.dist.toFixed(1)}km`);
+            logToFirmware(`COORD: ${itf.geoPos[0].toFixed(4)}, ${itf.geoPos[1].toFixed(4)}`);
+            
+            setTimeout(() => {
+                notification.style.display = 'none';
+                map.removeLayer(explosionMarker);
+                map.removeLayer(rocketLine);
+            }, 3000);
+            
+            // If not manually triggered, remove the interference
+            if (!manual) {
+                const index = interferences.indexOf(itf);
+                if (index > -1) {
+                    interferences.splice(index, 1);
+                }
+            }
+        }
+        
+        // Fire a burst of rockets
+        function fireRocketBurst() {
+            if (rockets_available <= 0) {
+                logToFirmware("WARNING: No rockets available for burst fire!");
+                return;
+            }
+            
+            const rocketsToFire = Math.min(rockets_available, 40);
+            logToFirmware(`BURST FIRE: Launching ${rocketsToFire} rockets`);
+            
+            for (let i = 0; i < rocketsToFire; i++) {
+                setTimeout(() => {
+                    if (interferences.length > 0) {
+                        const target = interferences[Math.floor(Math.random() * interferences.length)];
+                        launchRocket(target, true);
+                    } else {
+                        // Create a random target if no interferences
+                        const randomDist = Math.random() * (DETECTION_RANGE - 50) + 50;
+                        const randomAng = Math.random() * Math.PI * 2;
+                        const randomTarget = {
+                            freq: 1000000,
+                            dist: randomDist,
+                            ang: randomAng,
+                            geoPos: radarToGeo(randomDist, randomAng),
+                            band: {name: "RANDOM", color: "#ff7700"}
+                        };
+                        launchRocket(randomTarget, true);
+                    }
+                }, i * 100); // Stagger launches by 100ms
+            }
+        }
+        
+        // Fire a single rocket
+        function fireSingleRocket() {
+            if (rockets_available <= 0) {
+                logToFirmware("WARNING: No rockets available!");
+                return;
+            }
+            
+            if (interferences.length > 0) {
+                const target = interferences[Math.floor(Math.random() * interferences.length)];
+                launchRocket(target, true);
+            } else {
+                logToFirmware("WARNING: No targets available for rocket launch!");
+            }
+        }
+        
+        // Theodolite calibration function
+        function calibrateTheodolite() {
+            if (interferences.length === 0) {
+                logToFirmware("CALIBRATION FAILED: No targets detected");
+                return;
+            }
+            
+            const target = interferences[0]; // Use first interference as calibration target
+            
+            // Calculate calibration data
+            calibrationData.distance = target.dist;
+            calibrationData.azimuth = (target.ang * 180 / Math.PI).toFixed(1);
+            calibrationData.elevation = Math.atan2(10, target.dist) * 180 / Math.PI; // Simple elevation calculation
+            calibrationData.timer = (target.dist / 2).toFixed(1); // Simple timer calculation (distance/2 km/s)
+            
+            // Update UI
+            document.getElementById('calDistance').textContent = `${calibrationData.distance.toFixed(1)} km`;
+            document.getElementById('calAzimuth').textContent = `${calibrationData.azimuth}°`;
+            document.getElementById('calElevation').textContent = `${calibrationData.elevation.toFixed(1)}°`;
+            document.getElementById('calTimer').textContent = `${calibrationData.timer} s`;
+            
+            // Log to firmware
+            logToFirmware("THEODOLITE CALIBRATION COMPLETE");
+            logToFirmware(`DIST: ${calibrationData.distance.toFixed(1)}km`);
+            logToFirmware(`AZIMUTH: ${calibrationData.azimuth}°`);
+            logToFirmware(`ELEVATION: ${calibrationData.elevation.toFixed(1)}°`);
+            logToFirmware(`TIMER: ${calibrationData.timer}s`);
+            
+            // Generate and display firmware code
+            generateFirmwareCode();
+        }
+        
+        // Generate firmware code for smart rocket system
+        function generateFirmwareCode() {
+            const firmwareCode = `
+// UHURU MISSILE SHIELD FIRMWARE v2.1.5
+// TARGET ACQUISITION MODULE
+
+#include <math.h>
+
+typedef struct {
+    float distance;
+    float azimuth;
+    float elevation;
+    float timer;
+} TargetData;
+
+TargetData acquireTarget() {
+    TargetData target;
+    target.distance = ${calibrationData.distance.toFixed(1)}f;
+    target.azimuth = ${calibrationData.azimuth}f;
+    target.elevation = ${calibrationData.elevation.toFixed(1)}f;
+    target.timer = ${calibrationData.timer}f;
+    return target;
+}
+
+void launchSequence(TargetData t) {
+    // Rocket guidance system initialization
+    setAzimuth(t.azimuth);
+    setElevation(t.elevation);
+    setTimer(t.timer);
+    
+    // Fire sequence
+    initiateLaunch();
+}
+
+int main() {
+    TargetData target = acquireTarget();
+    launchSequence(target);
+    return 0;
+}
+            `;
+            
+            logToFirmware("FIRMWARE CODE GENERATED:");
+            logToFirmware(firmwareCode);
+        }
+        
+        // Log message to firmware display
+        function logToFirmware(message) {
+            const firmwareOutput = document.getElementById('firmwareOutput');
+            firmwareOutput.innerHTML += message + '<br>';
+            firmwareOutput.scrollTop = firmwareOutput.scrollHeight;
+        }
+        
+        // Draw radar grid
+        function drawRadarGrid() {
+            radarCtx.clearRect(0, 0, LEFT_W, HEIGHT);
+            
+            // Draw background
+            radarCtx.fillStyle = BLACK;
+            radarCtx.fillRect(0, 0, LEFT_W, HEIGHT);
+            
+            // Draw concentric circles
+            radarCtx.strokeStyle = LIGHTGRAY;
+            radarCtx.lineWidth = 1;
+            
+            for (let i = 1; i <= 5; i++) {
+                const r = RADAR_RADIUS * i / 5;
+                radarCtx.beginPath();
+                radarCtx.arc(RADAR_CENTER.x, RADAR_CENTER.y, r, 0, Math.PI * 2);
+                radarCtx.stroke();
+            }
+            
+            // Draw crosshairs
+            radarCtx.beginPath();
+            radarCtx.moveTo(RADAR_CENTER.x, 0);
+            radarCtx.lineTo(RADAR_CENTER.x, HEIGHT);
+            radarCtx.moveTo(0, RADAR_CENTER.y);
+            radarCtx.lineTo(LEFT_W, RADAR_CENTER.y);
+            radarCtx.stroke();
+        }
+        
+        // Draw radar sweep
+        function drawRadarSweep() {
+            angle += RADAR_SPEED;
+            const ex = RADAR_CENTER.x + RADAR_RADIUS * Math.cos(angle);
+            const ey = RADAR_CENTER.y + RADAR_RADIUS * Math.sin(angle);
+            
+            radarCtx.strokeStyle = GREEN;
+            radarCtx.lineWidth = 2;
+            radarCtx.beginPath();
+            radarCtx.moveTo(RADAR_CENTER.x, RADAR_CENTER.y);
+            radarCtx.lineTo(ex, ey);
+            radarCtx.stroke();
+            
+            // Draw sweep trail
+            const gradient = radarCtx.createRadialGradient(
+                RADAR_CENTER.x, RADAR_CENTER.y, 0,
+                RADAR_CENTER.x, RADAR_CENTER.y, RADAR_RADIUS
+            );
+            gradient.addColorStop(0, 'rgba(0, 255, 0, 0.2)');
+            gradient.addColorStop(1, 'rgba(0, 255, 0, 0)');
+            
+            radarCtx.fillStyle = gradient;
+            radarCtx.beginPath();
+            radarCtx.moveTo(RADAR_CENTER.x, RADAR_CENTER.y);
+            radarCtx.arc(RADAR_CENTER.x, RADAR_CENTER.y, RADAR_RADIUS, angle - 0.1, angle);
+            radarCtx.closePath();
+            radarCtx.fill();
+        }
+        
+        // Draw interferences on radar
+        function drawInterferences() {
+            const now = Date.now();
+            
+            for (let i = 0; i < interferences.length; i++) {
+                const itf = interferences[i];
+                const px = RADAR_CENTER.x + (itf.dist / DETECTION_RANGE) * RADAR_RADIUS * Math.cos(itf.ang);
+                const py = RADAR_CENTER.y + (itf.dist / DETECTION_RANGE) * RADAR_RADIUS * Math.sin(itf.ang);
+                const sz = 4 + 6 * itf.strength;
+                
+                // Draw interference dot
+                radarCtx.fillStyle = itf.band.color;
+                radarCtx.beginPath();
+                radarCtx.arc(px, py, sz, 0, Math.PI * 2);
+                radarCtx.fill();
+                
+                // Check for rocket launch (automatic detection)
+                const da = Math.abs((angle % (Math.PI * 2)) - (itf.ang % (Math.PI * 2)));
+                if (da < 0.1 && now - itf.time > 1000 && itf.strength > 0.8) {
+                    launchRocket(itf);
+                }
+            }
+            
+            // Update interference count
+            document.getElementById('interferenceCount').textContent = `Interferences: ${interferences.length}`;
+            
+            // Update map markers
+            updateMapMarkers();
+        }
+        
+        // Draw radar center
+        function drawRadarCenter() {
+            radarCtx.fillStyle = RED;
+            radarCtx.beginPath();
+            radarCtx.arc(RADAR_CENTER.x, RADAR_CENTER.y, 6, 0, Math.PI * 2);
+            radarCtx.fill();
+            
+            radarCtx.fillStyle = YELLOW;
+            radarCtx.beginPath();
+            radarCtx.arc(RADAR_CENTER.x, RADAR_CENTER.y, 4, 0, Math.PI * 2);
+            radarCtx.fill();
+        }
+        
+        // Draw signal display
+        function drawSignalDisplay() {
+            // Update signal data with random values
+            if (signalData.length >= signalCanvas.width) {
+                signalData.shift();
+            }
+            
+            const frequency = parseFloat(document.getElementById('frequency').value);
+            const gain = parseFloat(document.getElementById('gain').value) / 100;
+            
+            // Generate signal based on frequency and gain
+            const noise = Math.random() * 0.2;
+            const signal = Math.sin(Date.now() / 1000 * frequency) * gain + noise;
+            signalData.push(signal);
+            
+            // Draw signal
+            signalCtx.clearRect(0, 0, signalCanvas.width, signalCanvas.height);
+            
+            signalCtx.strokeStyle = GREEN;
+            signalCctx.lineWidth = 1;
+            signalCtx.beginPath();
+            
+            for (let i = 0; i < signalData.length; i++) {
+                const x = signalCanvas.width - signalData.length + i;
+                const y = signalCanvas.height / 2 - signalData[i] * signalCanvas.height / 3;
+                
+                if (i === 0) {
+                    signalCtx.moveTo(x, y);
+                } else {
+                    signalCtx.lineTo(x, y);
+                }
+            }
+            
+            signalCtx.stroke();
+        }
+        
+        // Update SDR controls
+        function updateSDRControls() {
+            const frequencySlider = document.getElementById('frequency');
+            const frequencyValue = document.getElementById('frequencyValue');
+            const gainSlider = document.getElementById('gain');
+            const gainValue = document.getElementById('gainValue');
+            
+            frequencyValue.textContent = `${frequencySlider.value} MHz`;
+            gainValue.textContent = `${gainSlider.value}%`;
+        }
+        
+        // Main draw function
+        function draw(timestamp) {
+            const deltaTime = timestamp - lastFrameTime;
+            lastFrameTime = timestamp;
+            
+            // Draw radar
+            drawRadarGrid();
+            drawRadarSweep();
+            drawInterferences();
+            drawRadarCenter();
+            
+            // Draw signal display
+            drawSignalDisplay();
+            
+            // Update SDR controls
+            updateSDRControls();
+            
+            requestAnimationFrame(draw);
+        }
+        
+        // Initialize application
+        function init() {
+            initMap();
+            initBandLegend();
+            updateSDRControls();
+            
+            // Initialize rocket status
+            document.getElementById('rocketsAvailable').textContent = rockets_available;
+            document.getElementById('rocketsFired').textContent = rockets_launched;
+            
+            // Event listeners
+            document.getElementById('simulateBtn').addEventListener('click', () => {
+                const newInterference = genInterference();
+                interferences.push(newInterference);
+                updateMapMarkers();
+                logToFirmware("Signal simulated: " + formatFreq(newInterference.freq));
+            });
+            
+            document.getElementById('resetBtn').addEventListener('click', () => {
+                interferences = [];
+                rockets_launched = 0;
+                rockets_available = MAX_ROCKETS;
+                document.getElementById('rocketsAvailable').textContent = rockets_available;
+                document.getElementById('rocketsFired').textContent = rockets_launched;
+                document.getElementById('rocketCount').textContent = `Rockets Launched: ${rockets_launched}`;
+                document.getElementById('interferenceCount').textContent = `Interferences: 0`;
+                updateMapMarkers();
+                logToFirmware("SYSTEM RESET: All counters zeroed");
+            });
+            
+            document.getElementById('singleRocketBtn').addEventListener('click', fireSingleRocket);
+            document.getElementById('burstRocketsBtn').addEventListener('click', fireRocketBurst);
+            document.getElementById('calibrateBtn').addEventListener('click', calibrateTheodolite);
+            
+            document.addEventListener('keydown', (e) => {
+                if (e.code === 'Space') {
+                    const newInterference = genInterference();
+                    interferences.push(newInterference);
+                    updateMapMarkers();
+                    logToFirmware("Signal generated: " + formatFreq(newInterference.freq));
+                    e.preventDefault();
+                }
+            });
+            
+            // SDR control events
+            document.getElementById('frequency').addEventListener('input', updateSDRControls);
+            document.getElementById('gain').addEventListener('input', updateSDRControls);
+            
+            // Start animation
+            requestAnimationFrame(draw);
+            
+            // Auto generate interferences
+            setInterval(() => {
+                if (Math.random() < 0.005) {
+                    const newInterference = genInterference();
+                    interferences.push(newInterference);
+                    updateMapMarkers();
+                }
+            }, 1000);
+            
+            // Initial firmware message
+            setTimeout(() => {
+                logToFirmware("SYSTEM BOOT COMPLETE");
+                logToFirmware("RADAR: ONLINE");
+                logToFirmware("SDR RECEIVER: ONLINE");
+                logToFirmware("ROCKET SYSTEM: ARMED");
+                logToFirmware("THEODOLITE: CALIBRATED");
+                logToFirmware("READY FOR OPERATIONS");
+            }, 1000);
+        }
+        
+        // Start the application
+        init();
+    </script>
+</body>
+</html>

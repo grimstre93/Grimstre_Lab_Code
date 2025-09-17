@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>ROTARACT CLUB OF MT.KENYA MERU QUESTIONNAIRE</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Street Families Questionnaire aligned to Rotaract Mt. Kenya Meru Strategic Plan 2025-2026" />
+  <style>
+    :root {
+      --brand: #0a6ebd;
+      --accent: #ffb703;
+      --bg: #f7f9fc;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --ok: #16a34a;
+      --warn: #dc2626;
+      --card: #ffffff;
+      --border: #e5e7eb;
+    }
+    html, body { 
+      margin: 0; 
+      padding: 0; 
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif; 
+      color: var(--text); 
+      background: var(--bg); 
+      line-height: 1.5;
+    }
+    header {
+      background: linear-gradient(135deg, var(--brand), #073b7a);
+      color: #fff; 
+      padding: 24px 16px; 
+      text-align: center;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    header h1 { 
+      margin: 0; 
+      font-size: 1.8rem; 
+      letter-spacing: 0.3px; 
+    }
+    header p { 
+      margin: 12px 0 0; 
+      color: #e5ecf7; 
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    main { 
+      max-width: 960px; 
+      margin: 32px auto; 
+      padding: 0 16px 48px; 
+    }
+    .card {
+      background: var(--card); 
+      border: 1px solid var(--border); 
+      border-radius: 12px; 
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      padding: 24px; 
+      margin-bottom: 24px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+    }
+    .row { 
+      display: grid; 
+      grid-template-columns: 1fr; 
+      gap: 16px; 
+    }
+    @media (min-width: 720px) { 
+      .row-2 { grid-template-columns: 1fr 1fr; } 
+      .row-3 { grid-template-columns: 1fr 1fr 1fr; } 
+    }
+    label { 
+      display: block; 
+      font-weight: 600; 
+      margin-bottom: 8px; 
+      color: var(--text);
+    }
+    .muted { 
+      color: var(--muted); 
+      font-weight: 500; 
+    }
+    input[type="text"], input[type="number"], select {
+      width: 100%; 
+      padding: 12px 14px; 
+      border: 1px solid var(--border); 
+      border-radius: 8px; 
+      background: #fff; 
+      color: var(--text);
+      font-size: 1rem;
+      box-sizing: border-box;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    input[type="text"]:focus, input[type="number"]:focus, select:focus {
+      outline: none;
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px rgba(10, 110, 189, 0.1);
+    }
+    .q { 
+      margin: 24px 0; 
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .q:last-child {
+      border-bottom: none;
+    }
+    .q h3 { 
+      font-size: 1.1rem; 
+      margin: 0 0 12px 0; 
+      line-height: 1.4;
+    }
+    .options { 
+      display: grid; 
+      gap: 12px; 
+    }
+    .options label { 
+      font-weight: 500; 
+      display: flex; 
+      align-items: center; 
+      gap: 10px; 
+      cursor: pointer; 
+      padding: 10px;
+      border-radius: 8px;
+      transition: background-color 0.2s;
+    }
+    .options label:hover {
+      background-color: #f1f7ff;
+    }
+    input[type="radio"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--brand);
+    }
+    .pill {
+      display: inline-block; 
+      padding: 4px 10px; 
+      border-radius: 999px; 
+      background: #e8f1fc; 
+      color: var(--brand); 
+      font-size: 12px; 
+      font-weight: 700; 
+      letter-spacing: 0.3px;
+      margin-right: 8px;
+    }
+    .toolbar { 
+      display: flex; 
+      flex-wrap: wrap; 
+      gap: 12px; 
+      margin-top: 24px;
+    }
+    button {
+      background: var(--brand); 
+      color: #fff; 
+      border: none; 
+      border-radius: 10px; 
+      padding: 12px 18px;
+      font-weight: 700; 
+      cursor: pointer;
+      font-size: 1rem;
+      transition: background-color 0.2s, transform 0.1s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    button:hover {
+      background: #085ca5;
+      transform: translateY(-1px);
+    }
+    button:active {
+      transform: translateY(0);
+    }
+    button.secondary { 
+      background: #eef2ff; 
+      color: #1e3a8a; 
+    }
+    button.secondary:hover {
+      background: #e0e7ff;
+    }
+    button.warn { 
+      background: var(--warn); 
+    }
+    button.warn:hover {
+      background: #b91c1c;
+    }
+    button:disabled { 
+      opacity: 0.5; 
+      cursor: not-allowed; 
+    }
+    .status { 
+      display: flex; 
+      align-items: center; 
+      gap: 12px; 
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .status .dot { 
+      width: 12px; 
+      height: 12px; 
+      border-radius: 50%; 
+      background: var(--ok); 
+      display: inline-block; 
+    }
+    .score { 
+      font-weight: 800; 
+      color: var(--brand); 
+      font-size: 1.2rem;
+    }
+    .log {
+      max-height: 300px; 
+      overflow: auto; 
+      border: 1px dashed var(--border); 
+      padding: 16px; 
+      border-radius: 8px; 
+      background: #fafcff;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; 
+      font-size: 0.9rem;
+    }
+    .log .entry { 
+      border-bottom: 1px solid var(--border); 
+      padding: 12px 0; 
+    }
+    .log .entry:last-child { 
+      border-bottom: none; 
+    }
+    .badge { 
+      background: #f1f5f9; 
+      border: 1px solid var(--border); 
+      padding: 4px 10px; 
+      border-radius: 999px; 
+      font-size: 12px; 
+      margin-right: 8px;
+    }
+    footer { 
+      text-align: center; 
+      color: var(--muted); 
+      padding: 24px 16px;
+      margin-top: 32px;
+      border-top: 1px solid var(--border);
+    }
+    .hint { 
+      color: var(--muted); 
+      font-size: 0.9rem; 
+      margin-top: 8px;
+    }
+    .ok { 
+      color: var(--ok); 
+      font-weight: 700; 
+    }
+    .warnText { 
+      color: var(--warn); 
+      font-weight: 700; 
+    }
+    .progress-container {
+      width: 100%;
+      height: 8px;
+      background-color: #e5e7eb;
+      border-radius: 4px;
+      margin: 16px 0;
+      overflow: hidden;
+    }
+    .progress-bar {
+      height: 100%;
+      background-color: var(--brand);
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+    .section-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .theme-tag {
+      background-color: #f0f9ff;
+      color: #0369a1;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>ROTARACT CLUB OF MT.KENYA MERU QUESTIONNAIRE</h1>
+    <p>Aligned to the Strategic Plan 2025–2026: Mentorship, Feeding, Family Support, Leadership, and M&amp;E</p>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2 style="margin-top: 0;">Participant Information</h2>
+      <div class="row row-2">
+        <div>
+          <label for="participantName">Participant name</label>
+          <input id="participantName" name="participantName" type="text" placeholder="Optional — first name or alias" />
+        </div>
+        <div>
+          <label for="ward">Ward or location</label>
+          <input id="ward" name="ward" type="text" placeholder="e.g., Meru Town, Embu Road Ward" />
+        </div>
+      </div>
+      <div class="row row-3" style="margin-top: 16px;">
+        <div>
+          <label for="age">Age</label>
+          <input id="age" name="age" type="number" min="8" max="80" placeholder="Years" />
+        </div>
+        <div>
+          <label for="gender">Gender</label>
+          <select id="gender" name="gender">
+            <option value="">Prefer not to say</option>
+            <option>Female</option>
+            <option>Male</option>
+            <option>Non-binary</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div>
+          <label for="timestamp">Submission timestamp</label>
+          <input id="timestamp" name="timestamp" type="text" readonly />
+        </div>
+      </div>
+      <p class="hint" style="margin-top:16px;">Data is saved locally in your browser. You can export CSV for M&amp;E.</p>
+    </section>
+
+    <form id="quizForm" class="card">
+      <div class="section-title">
+        <h2 style="margin: 0;">Questionnaire</h2>
+        <div id="progressText">0/15 answered</div>
+      </div>
+      
+      <div class="progress-container">
+        <div id="progressBar" class="progress-bar" style="width: 0%"></div>
+      </div>
+      
+      <div class="status">
+        <span class="dot" title="Ready"></span>
+        <span class="badge">Maslow &amp; Daily Life</span>
+        <span class="badge">Academics</span>
+        <span class="badge">Health &amp; Safety</span>
+        <span class="badge">Business &amp; Motivation</span>
+        <span class="badge">Rotaract Action</span>
+      </div>
+
+      <!-- Questions will be inserted here by JavaScript -->
+      <div id="questions"></div>
+
+      <div class="toolbar">
+        <button type="button" id="submitBtn">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576 6.636 10.07Zm6.787-8.201L1.591 6.602l4.339 2.76 7.85-7.85Z"/>
+          </svg>
+          Submit responses
+        </button>
+        <button type="button" class="secondary" id="exportBtn">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+            <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+          </svg>
+          Export CSV
+        </button>
+        <button type="button" class="secondary" id="clearBtn">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+            <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+          </svg>
+          Clear local data
+        </button>
+      </div>
+      <p id="result" class="hint" style="margin-top: 12px;"></p>
+    </form>
+
+    <section class="card">
+      <h2 style="margin-top:0;">Submission Log</h2>
+      <div id="log" class="log" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <footer>
+    Rotaract Club of Mt. Kenya Meru • Community-based in Meru County • 2025–2026
+  </footer>
+
+  <script>
+    // Questionnaire dataset
+    const QUIZ = [
+      {
+        question: "Who do street families primarily rely on for their daily survival needs?",
+        options: ["Community members", "Government agencies", "Non-governmental organizations", "Themselves"],
+        answer: 3,
+        theme: "Daily life"
+      },
+      {
+        question: "What is the most unmet basic need among street families according to Maslow's hierarchy?",
+        options: ["Self-actualization", "Esteem", "Love and belonging", "Safety and security"],
+        answer: 3,
+        theme: "Maslow"
+      },
+      {
+        question: "Why is access to sanitary pads a critical issue for street girls?",
+        options: ["It affects their self-esteem", "All of the above", "It causes health complications", "It leads to school absenteeism"],
+        answer: 1,
+        theme: "Health"
+      },
+      {
+        question: "How does drug abuse impact the future projections of street youth?",
+        options: ["It limits their academic potential", "It increases employment opportunities", "It improves their social skills", "It enhances their creativity"],
+        answer: 0,
+        theme: "Health"
+      },
+      {
+        question: "Who is most vulnerable to early pregnancies among street families?",
+        options: ["Elderly women", "Young girls", "Young boys", "Adult women"],
+        answer: 1,
+        theme: "Health"
+      },
+      {
+        question: "What role can Rotaract play in addressing violence against street families?",
+        options: ["Organizing protests", "Offering counseling services", "Creating safe shelters", "Providing legal aid"],
+        answer: 2,
+        theme: "Safety & Rotaract"
+      },
+      {
+        question: "Why is academic support important for street children?",
+        options: ["It provides a pathway out of poverty", "It improves their physical health", "It helps them socialize", "It keeps them busy"],
+        answer: 0,
+        theme: "Academics"
+      },
+      {
+        question: "How can family planning education benefit street families?",
+        options: ["Reduces early pregnancies", "Promotes health awareness", "Improves financial planning", "All of the above"],
+        answer: 3,
+        theme: "Health"
+      },
+      {
+        question: "What motivates street families to engage in informal business activities?",
+        options: ["Lack of formal employment", "Desire for independence", "Peer pressure", "Government incentives"],
+        answer: 0,
+        theme: "Business"
+      },
+      {
+        question: "Who can street families turn to for academic mentorship?",
+        options: ["Religious leaders", "Rotaract clubs", "Local politicians", "Police officers"],
+        answer: 1,
+        theme: "Academics & Rotaract"
+      },
+      {
+        question: "What is a common barrier to accessing healthcare for street families?",
+        options: ["Lack of transport", "Language barriers", "Fear of hospitals", "Cost of services"],
+        answer: 3,
+        theme: "Health access"
+      },
+      {
+        question: "Why do many street children drop out of school?",
+        options: ["Lack of school supplies", "All of the above", "Family responsibilities", "Bullying"],
+        answer: 1,
+        theme: "Academics"
+      },
+      {
+        question: "How can Rotaract support street families in business development?",
+        options: ["All of the above", "Providing capital", "Offering training", "Connecting to markets"],
+        answer: 0,
+        theme: "Business & Rotaract"
+      },
+      {
+        question: "What is the most immediate need for street families according to Maslow's hierarchy?",
+        options: ["Safety", "Belonging", "Physiological needs", "Self-esteem"],
+        answer: 2,
+        theme: "Maslow"
+      },
+      {
+        question: "How does insecurity affect the daily life of street families?",
+        options: ["It limits movement", "It causes trauma", "All of the above", "It reduces access to services"],
+        answer: 2,
+        theme: "Safety"
+      }
+    ];
+
+    // DOM elements
+    const questionsEl = document.getElementById('questions');
+    const submitBtn = document.getElementById('submitBtn');
+    const exportBtn = document.getElementById('exportBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const resultEl = document.getElementById('result');
+    const logEl = document.getElementById('log');
+    const tsEl = document.getElementById('timestamp');
+    const nameEl = document.getElementById('participantName');
+    const wardEl = document.getElementById('ward');
+    const ageEl = document.getElementById('age');
+    const genderEl = document.getElementById('gender');
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+
+    // Initialize timestamp
+    function nowISO() {
+      const d = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      const yyyy = d.getFullYear();
+      const mm = pad(d.getMonth() + 1);
+      const dd = pad(d.getDate());
+      const hh = pad(d.getHours());
+      const mi = pad(d.getMinutes());
+      const ss = pad(d.getSeconds());
+      return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
+    }
+    function refreshTimestamp() { tsEl.value = nowISO(); }
+    refreshTimestamp();
+    setInterval(refreshTimestamp, 1000);
+
+    // Update progress indicator
+    function updateProgress() {
+      const answers = collectAnswers();
+      const answered = answers.filter(a => a !== null).length;
+      const percentage = (answered / QUIZ.length) * 100;
+      
+      progressBar.style.width = `${percentage}%`;
+      progressText.textContent = `${answered}/${QUIZ.length} answered`;
+    }
+
+    // Render questions
+    function renderQuestions() {
+      questionsEl.innerHTML = '';
+      QUIZ.forEach((q, qi) => {
+        const wrap = document.createElement('div');
+        wrap.className = 'q';
+        const h = document.createElement('h3');
+        h.innerHTML = `<span class="pill">${qi + 1}</span> ${q.question}`;
+        wrap.appendChild(h);
+        
+        const themeTag = document.createElement('div');
+        themeTag.className = 'theme-tag';
+        themeTag.textContent = q.theme;
+        wrap.appendChild(themeTag);
+        
+        const opts = document.createElement('div');
+        opts.className = 'options';
+        q.options.forEach((opt, oi) => {
+          const id = `q${qi}_opt${oi}`;
+          const label = document.createElement('label');
+          label.setAttribute('for', id);
+          const input = document.createElement('input');
+          input.type = 'radio';
+          input.name = `q${qi}`;
+          input.id = id;
+          input.value = oi;
+          input.addEventListener('change', updateProgress);
+          label.appendChild(input);
+          const span = document.createElement('span');
+          span.textContent = opt;
+          label.appendChild(span);
+          opts.appendChild(label);
+        });
+        wrap.appendChild(opts);
+        questionsEl.appendChild(wrap);
+      });
+      
+      updateProgress();
+    }
+    renderQuestions();
+
+    // Local storage keys
+    const LS_KEY = 'rotaract_meru_responses_v1';
+
+    function getLocal() {
+      try { return JSON.parse(localStorage.getItem(LS_KEY) || '[]'); } catch { return []; }
+    }
+    function setLocal(data) {
+      localStorage.setItem(LS_KEY, JSON.stringify(data));
+    }
+
+    function scoreSubmission(answers) {
+      let score = 0;
+      answers.forEach((a, i) => {
+        if (a !== null && Number(a) === Number(QUIZ[i].answer)) score++;
+      });
+      return score;
+    }
+
+    function collectAnswers() {
+      const answers = QUIZ.map((_, i) => {
+        const checked = document.querySelector(`input[name="q${i}"]:checked`);
+        return checked ? Number(checked.value) : null;
+      });
+      return answers;
+    }
+
+    function validate(answers) {
+      // Allow partial but warn if many missing
+      const missing = answers.filter(a => a === null).length;
+      if (missing > 0) {
+        return { ok: true, warn: `${missing} unanswered. You can still submit or complete them first.` };
+      }
+      return { ok: true };
+    }
+
+    function toCSV(rows) {
+      if (!rows.length) return '';
+      const headers = Object.keys(rows[0]);
+      const escape = v => {
+        const s = String(v ?? '');
+        if (/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+        return s;
+      };
+      const lines = [headers.join(',')].concat(
+        rows.map(r => headers.map(h => escape(r[h])).join(','))
+      );
+      return lines.join('\n');
+    }
+
+    function renderLog() {
+      const data = getLocal();
+      logEl.innerHTML = '';
+      if (!data.length) {
+        logEl.innerHTML = '<div class="hint">No submissions yet.</div>';
+        return;
+      }
+      data.slice().reverse().forEach((row, idx) => {
+        const div = document.createElement('div');
+        div.className = 'entry';
+        const answered = row.answers.filter(a => a !== '').length;
+        div.innerHTML = `
+          <div><strong>${row.timestamp}</strong> — <span class="badge">${row.ward || 'No ward'}</span> <span class="badge">${row.gender || 'Gender N/A'}</span></div>
+          <div class="hint">Name: ${row.participantName || 'N/A'} • Age: ${row.age || 'N/A'} • Score: <span class="score">${row.score}/${QUIZ.length}</span> • Answered: ${answered}/${QUIZ.length}</div>
+        `;
+        logEl.appendChild(div);
+      });
+    }
+    renderLog();
+
+    submitBtn.addEventListener('click', () => {
+      const answers = collectAnswers();
+      const check = validate(answers);
+      const score = scoreSubmission(answers);
+      const record = {
+        timestamp: nowISO(),
+        participantName: nameEl.value.trim(),
+        ward: wardEl.value.trim(),
+        age: ageEl.value.trim(),
+        gender: genderEl.value,
+        score,
+        answers: answers.map((a, i) => a === null ? '' : `${a} (${QUIZ[i].options[a]})`)
+      };
+      const data = getLocal();
+      data.push(record);
+      setLocal(data);
+      renderLog();
+      const pct = ((score / QUIZ.length) * 100).toFixed(1);
+      resultEl.innerHTML = `
+        <span class="ok">Saved</span> at ${record.timestamp}. Score: <span class="score">${score}/${QUIZ.length}</span> (${pct}%). ${check.warn ? '<span class="warnText">' + check.warn + '</span>' : ''}
+      `;
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    });
+
+    exportBtn.addEventListener('click', () => {
+      const data = getLocal();
+      if (!data.length) {
+        alert('No submissions to export.');
+        return;
+      }
+      const flat = data.map(row => {
+        const out = {
+          timestamp: row.timestamp,
+          participantName: row.participantName,
+          ward: row.ward,
+          age: row.age,
+          gender: row.gender,
+          score: row.score
+        };
+        // Add Q columns
+        QUIZ.forEach((q, i) => {
+          out[`Q${i+1}`] = row.answers[i] || '';
+        });
+        return out;
+      });
+      const csv = toCSV(flat);
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'rotaract_meru_questionnaire_responses.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    clearBtn.addEventListener('click', () => {
+      if (confirm('Clear all locally saved submissions? This cannot be undone.')) {
+        localStorage.removeItem(LS_KEY);
+        renderLog();
+        resultEl.textContent = 'Local data cleared.';
+      }
+    });
+  </script>
+</body>
+</html>

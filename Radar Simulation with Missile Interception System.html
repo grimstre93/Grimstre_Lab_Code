@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GRIMSTRE MISSILE SHIELD - Interception System</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Courier New', monospace;
+        }
+        
+        body {
+            background-color: #000;
+            color: #fff;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .pane {
+            height: 100%;
+            position: relative;
+        }
+        
+        .left-pane {
+            width: 50%;
+            border-right: 1px solid #333;
+        }
+        
+        .right-pane {
+            width: 50%;
+        }
+        
+        .radar-container, .map-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+        
+        canvas {
+            display: block;
+        }
+        
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .status-bar {
+            height: 80px;
+            background-color: #000;
+            border-top: 1px solid #333;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+        }
+        
+        .band-legend {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border: 1px solid #333;
+            border-radius: 5px;
+            z-index: 10;
+        }
+        
+        .band-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        
+        .band-color {
+            width: 12px;
+            height: 12px;
+            margin-right: 8px;
+        }
+        
+        .controls {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            display: flex;
+            gap: 10px;
+            z-index: 10;
+        }
+        
+        button {
+            background-color: #222;
+            color: #0f0;
+            border: 1px solid #0f0;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+        }
+        
+        button:hover {
+            background-color: #0f0;
+            color: #000;
+        }
+        
+        .sdr-panel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border: 1px solid #333;
+            border-radius: 5px;
+            width: 200px;
+            z-index: 1000;
+        }
+        
+        .sdr-control {
+            margin-bottom: 10px;
+        }
+        
+        .sdr-control label {
+            display: block;
+            margin-bottom: 3px;
+            font-size: 12px;
+            color: #0f0;
+        }
+        
+        .sdr-control input {
+            width: 100%;
+            background-color: #222;
+            border: 1px solid #0f0;
+            color: #0f0;
+            padding: 3px;
+        }
+        
+        .signal-display {
+            height: 60px;
+            background-color: #111;
+            border: 1px solid #333;
+            margin-top: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .signal-plot {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        h3 {
+            color: #0f0;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        
+        .notification {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(255, 0, 0, 0.7);
+            padding: 10px 20px;
+            border-radius: 5px;
+            display: none;
+            z-index: 1000;
+        }
+        
+        .map-overlay {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border: 1px solid #333;
+            border-radius: 5px;
+            z-index: 1000;
+        }
+        
+        .intercept-panel {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border: 1px solid #333;
+            border-radius: 5px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .intercept-btn {
+            background-color: #300;
+            color: #f00;
+            border: 1px solid #f00;
+        }
+        
+        .intercept-btn:hover {
+            background-color: #f00;
+            color: #000;
+        }
+        
+        .grid-overlay {
+            position: absolute;
+            top: 10px;
+            right: 220px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border: 1px solid #333;
+            border-radius: 5px;
+            z-index: 1000;
+            width: 150px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="pane left-pane">
+            <div class="radar-container">
+                <canvas id="radarCanvas"></canvas>
+                <div class="band-legend">
+                    <h3>BAND PLAN</h3>
+                    <div id="bandList"></div>
+                </div>
+                <div class="grid-overlay">
+                    <h3>GRID REFERENCE</h3>
+                    <div id="gridInfo">Grid: 0,0</div>
+                    <div id="distanceInfo">Distance: 0 km</div>
+                    <div id="bearingInfo">Bearing: 0°</div>
+                </div>
+                <div class="controls">
+                    <button id="simulateBtn">Simulate Signal (SPACE)</button>
+                    <button id="resetBtn">Reset</button>
+                    <button id="interceptBtn" class="intercept-btn">Intercept Missile (I)</button>
+                </div>
+            </div>
+        </div>
+        <div class="pane right-pane">
+            <div class="map-container">
+                <div id="map"></div>
+                <div class="sdr-panel">
+                    <h3>SDR CONTROLS</h3>
+                    <div class="sdr-control">
+                        <label for="frequency">Frequency (MHz)</label>
+                        <input type="range" id="frequency" min="0.15" max="3.8" step="0.01" value="1.0">
+                        <span id="frequencyValue">1.00 MHz</span>
+                    </div>
+                    <div class="sdr-control">
+                        <label for="gain">Gain</label>
+                        <input type="range" id="gain" min="0" max="100" value="80">
+                        <span id="gainValue">80%</span>
+                    </div>
+                    <div class="signal-display">
+                        <canvas id="signalCanvas" class="signal-plot"></canvas>
+                    </div>
+                </div>
+                <div class="intercept-panel">
+                    <h3>INTERCEPTION SYSTEM</h3>
+                    <div>Intercept Course: <span id="intercept-course">0°</span></div>
+                    <div>Intercept Time: <span id="intercept-time">0s</span></div>
+                    <div>Intercept Point: <span id="intercept-point">0,0</span></div>
+                </div>
+                <div class="map-overlay">
+                    <div>Zoom: <span id="zoom-level">5</span></div>
+                    <div>Center: <span id="map-center">0, 0</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="status-bar">
+        <div class="status-item" id="interferenceCount">Interferences: 0</div>
+        <div class="status-item" id="rocketCount">Rockets Launched: 0</div>
+        <div class="status-item" id="interceptCount">Interceptions: 0</div>
+        <div class="status-item">Press SPACE to simulate signal, I to intercept</div>
+    </div>
+    <div class="notification" id="notification">ROCKET LAUNCHED!</div>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script>
+        // Configuration
+        const WIDTH = 1200;
+        const HEIGHT = 800;
+        const LEFT_W = WIDTH / 2;
+        const RIGHT_W = WIDTH - LEFT_W;
+        const FPS = 60;
+        
+        // Radar settings
+        const DETECTION_RANGE = 500;    // km
+        const RADAR_RADIUS = Math.min(LEFT_W, HEIGHT) / 2 - 20;
+        const RADAR_CENTER = { x: LEFT_W / 2, y: HEIGHT / 2 };
+        const RADAR_SPEED = 0.03;
+        
+        // Defense center coordinates (provided)
+        const DEFENSE_CENTER = [0.046757, 37.654663];
+        
+        // Interceptor settings
+        const INTERCEPTOR_SPEED = 2.5; // km/s
+        const INTERCEPTOR_RANGE = 300; // km
+        
+        // Colors
+        const BLACK = '#000000';
+        const WHITE = '#ffffff';
+        const GREEN = '#00ff00';
+        const RED = '#ff0000';
+        const YELLOW = '#ffff00';
+        const BLUE = '#0088ff';
+        const DARKGRAY = '#1e1e1e';
+        const LIGHTGRAY = '#646464';
+        const GRIDGRAY = '#323232';
+        
+        // Band plan
+        const BAND_PLAN = [
+            {min:150e3, max:280e3,  color:'#900000', mode:'AM',  name:'Longwave'},
+            {min:530e3, max:1.7e6,  color:'#900080', mode:'AM',  name:'Mediumwave'},
+            {min:1.8e6, max:2.0e6,  color:'#900080', mode:'LSB', name:'160m'},
+            {min:2.3e6, max:2.5e6,  color:'#900000', mode:'AM',  name:'Shortwave'},
+            {min:3.5e6, max:3.8e6,  color:'#900080', mode:'LSB', name:'80m'}
+        ];
+        
+        // State
+        let angle = 0.0;
+        let interferences = [];
+        let rockets_launched = 0;
+        let interceptions = 0;
+        let lastFrameTime = 0;
+        let signalData = [];
+        let map;
+        let mapMarkers = [];
+        let interceptors = [];
+        let gridLines = [];
+        let activeMissile = null;
+        
+        // Canvas setup
+        const radarCanvas = document.getElementById('radarCanvas');
+        const signalCanvas = document.getElementById('signalCanvas');
+        
+        radarCanvas.width = LEFT_W;
+        radarCanvas.height = HEIGHT;
+        
+        signalCanvas.width = 200;
+        signalCanvas.height = 60;
+        
+        const radarCtx = radarCanvas.getContext('2d');
+        const signalCtx = signalCanvas.getContext('2d');
+        
+        // Grid system
+        const GRID_SIZE = 50; // km per grid cell
+        const GRID_LABELS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        
+        // Initialize map
+        function initMap() {
+            map = L.map('map', {
+                attributionControl: false,
+                zoomControl: false
+            }).setView(DEFENSE_CENTER, 7);
+            
+            // Add OpenStreetMap tile layer with dark theme
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 18,
+            }).addTo(map);
+            
+            // Add defense center marker
+            L.circleMarker(DEFENSE_CENTER, {
+                color: RED,
+                fillColor: YELLOW,
+                fillOpacity: 0.8,
+                radius: 8
+            }).addTo(map).bindPopup("Defense Center<br>Lat: " + DEFENSE_CENTER[0] + "<br>Lon: " + DEFENSE_CENTER[1]);
+            
+            // Draw grid system
+            drawGridSystem();
+            
+            // Update map info
+            updateMapInfo();
+            
+            // Listen to map move events
+            map.on('move', updateMapInfo);
+        }
+        
+        // Draw grid system on the map
+        function drawGridSystem() {
+            // Clear existing grid lines
+            gridLines.forEach(line => map.removeLayer(line));
+            gridLines = [];
+            
+            // Calculate bounds for grid
+            const bounds = map.getBounds();
+            const north = bounds.getNorth();
+            const south = bounds.getSouth();
+            const east = bounds.getEast();
+            const west = bounds.getWest();
+            
+            // Calculate grid lines based on defense center
+            const centerLat = DEFENSE_CENTER[0];
+            const centerLon = DEFENSE_CENTER[1];
+            
+            // Calculate approximate km per degree (simplified)
+            const kmPerDegreeLat = 110.574;
+            const kmPerDegreeLon = 111.320 * Math.cos(centerLat * Math.PI / 180);
+            
+            // Calculate grid spacing in degrees
+            const gridSpacingLat = GRID_SIZE / kmPerDegreeLat;
+            const gridSpacingLon = GRID_SIZE / kmPerDegreeLon;
+            
+            // Draw latitude grid lines
+            let lat = centerLat;
+            let latIndex = 0;
+            while (lat <= north) {
+                const line = L.polyline([[lat, west], [lat, east]], {color: 'rgba(0, 255, 0, 0.3)', weight: 1});
+                line.addTo(map);
+                gridLines.push(line);
+                
+                // Add label
+                const label = L.marker([lat, west], {
+                    icon: L.divIcon({
+                        html: GRID_LABELS[latIndex % GRID_LABELS.length] + Math.floor(latIndex / GRID_LABELS.length),
+                        className: 'grid-label',
+                        iconSize: [20, 20]
+                    })
+                });
+                label.addTo(map);
+                gridLines.push(label);
+                
+                lat += gridSpacingLat;
+                latIndex++;
+            }
+            
+            lat = centerLat - gridSpacingLat;
+            latIndex = -1;
+            while (lat >= south) {
+                const line = L.polyline([[lat, west], [lat, east]], {color: 'rgba(0, 255, 0, 0.3)', weight: 1});
+                line.addTo(map);
+                gridLines.push(line);
+                
+                // Add label
+                const label = L.marker([lat, west], {
+                    icon: L.divIcon({
+                        html: GRID_LABELS[Math.abs(latIndex) % GRID_LABELS.length] + Math.floor(Math.abs(latIndex) / GRID_LABELS.length),
+                        className: 'grid-label',
+                        iconSize: [20, 20]
+                    })
+                });
+                label.addTo(map);
+                gridLines.push(label);
+                
+                lat -= gridSpacingLat;
+                latIndex--;
+            }
+            
+            // Draw longitude grid lines
+            let lon = centerLon;
+            let lonIndex = 0;
+            while (lon <= east) {
+                const line = L.polyline([[north, lon], [south, lon]], {color: 'rgba(0, 255, 0, 0.3)', weight: 1});
+                line.addTo(map);
+                gridLines.push(line);
+                
+                // Add label
+                const label = L.marker([north, lon], {
+                    icon: L.divIcon({
+                        html: lonIndex.toString(),
+                        className: 'grid-label',
+                        iconSize: [20, 20]
+                    })
+                });
+                label.addTo(map);
+                gridLines.push(label);
+                
+                lon += gridSpacingLon;
+                lonIndex++;
+            }
+            
+            lon = centerLon - gridSpacingLon;
+            lonIndex = -1;
+            while (lon >= west) {
+                const line = L.polyline([[north, lon], [south, lon]], {color: 'rgba(0, 255, 0, 0.3)', weight: 1});
+                line.addTo(map);
+                gridLines.push(line);
+                
+                // Add label
+                const label = L.marker([north, lon], {
+                    icon: L.divIcon({
+                        html: Math.abs(lonIndex).toString(),
+                        className: 'grid-label',
+                        iconSize: [20, 20]
+                    })
+                });
+                label.addTo(map);
+                gridLines.push(label);
+                
+                lon -= gridSpacingLon;
+                lonIndex--;
+            }
+        }
+        
+        // Convert radar coordinates to geographical coordinates
+        function radarToGeo(dist, ang) {
+            // Convert polar coordinates (distance in km, angle in radians) to geographical offset
+            const earthRadius = 6371; // Earth radius in km
+            const distRatio = dist / earthRadius;
+            const bearing = ang; // Bearing in radians from north
+            
+            // Defense center coordinates in radians
+            const defenseLat = DEFENSE_CENTER[0] * Math.PI / 180;
+            const defenseLon = DEFENSE_CENTER[1] * Math.PI / 180;
+            
+            // Calculate new latitude
+            const newLat = Math.asin(Math.sin(defenseLat) * Math.cos(distRatio) + 
+                            Math.cos(defenseLat) * Math.sin(distRatio) * Math.cos(bearing));
+            
+            // Calculate new longitude
+            const newLon = defenseLon + Math.atan2(Math.sin(bearing) * Math.sin(distRatio) * Math.cos(defenseLat),
+                            Math.cos(distRatio) - Math.sin(defenseLat) * Math.sin(newLat));
+            
+            // Convert back to degrees
+            return [
+                newLat * 180 / Math.PI,
+                newLon * 180 / Math.PI
+            ];
+        }
+        
+        // Convert geographical coordinates to radar coordinates
+        function geoToRadar(lat, lon) {
+            // Convert degrees to radians
+            const defenseLat = DEFENSE_CENTER[0] * Math.PI / 180;
+            const defenseLon = DEFENSE_CENTER[1] * Math.PI / 180;
+            const targetLat = lat * Math.PI / 180;
+            const targetLon = lon * Math.PI / 180;
+            
+            // Calculate distance using Haversine formula
+            const dLat = targetLat - defenseLat;
+            const dLon = targetLon - defenseLon;
+            
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                     Math.cos(defenseLat) * Math.cos(targetLat) *
+                     Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            const dist = 6371 * c; // Distance in km
+            
+            // Calculate bearing
+            const y = Math.sin(dLon) * Math.cos(targetLat);
+            const x = Math.cos(defenseLat) * Math.sin(targetLat) -
+                     Math.sin(defenseLat) * Math.cos(targetLat) * Math.cos(dLon);
+            let bearing = Math.atan2(y, x);
+            
+            // Normalize bearing
+            bearing = (bearing + 2 * Math.PI) % (2 * Math.PI);
+            
+            return {
+                dist: dist,
+                bearing: bearing
+            };
+        }
+        
+        // Calculate grid reference from coordinates
+        function calculateGridReference(lat, lon) {
+            // Calculate offset from defense center in km
+            const radarPos = geoToRadar(lat, lon);
+            const dist = radarPos.dist;
+            const bearing = radarPos.bearing;
+            
+            // Calculate x and y offsets
+            const x = dist * Math.sin(bearing);
+            const y = dist * Math.cos(bearing);
+            
+            // Calculate grid coordinates
+            const gridX = Math.floor(x / GRID_SIZE);
+            const gridY = Math.floor(y / GRID_SIZE);
+            
+            // Format grid reference
+            const letterX = GRID_LABELS[gridX % GRID_LABELS.length];
+            const numberX = Math.floor(gridX / GRID_LABELS.length);
+            const letterY = GRID_LABELS[gridY % GRID_LABELS.length];
+            const numberY = Math.floor(gridY / GRID_LABELS.length);
+            
+            return {
+                grid: `${letterX}${numberX}-${letterY}${numberY}`,
+                distance: dist,
+                bearing: bearing * 180 / Math.PI
+            };
+        }
+        
+        // Update map information overlay
+        function updateMapInfo() {
+            const center = map.getCenter();
+            document.getElementById('zoom-level').textContent = map.getZoom();
+            document.getElementById('map-center').textContent = 
+                `${center.lat.toFixed(4)}, ${center.lng.toFixed(4)}`;
+            
+            // Redraw grid when map moves
+            drawGridSystem();
+        }
+        
+        // Initialize band legend
+        function initBandLegend() {
+            const bandList = document.getElementById('bandList');
+            bandList.innerHTML = '';
+            
+            BAND_PLAN.forEach(band => {
+                const bandItem = document.createElement('div');
+                bandItem.className = 'band-item';
+                
+                const colorBox = document.createElement('div');
+                colorBox.className = 'band-color';
+                colorBox.style.backgroundColor = band.color;
+                
+                const bandText = document.createElement('span');
+                bandText.style.fontSize = '12px';
+                bandText.style.color = WHITE;
+                bandText.textContent = `${band.name} (${band.mode})`;
+                
+                bandItem.appendChild(colorBox);
+                bandItem.appendChild(bandText);
+                bandList.appendChild(bandItem);
+            });
+        }
+        
+        // Format frequency
+        function formatFreq(f) {
+            if (f >= 1e6) {
+                return `${(f/1e6).toFixed(2)} MHz`;
+            }
+            if (f >= 1e3) {
+                return `${(f/1e3).toFixed(1)} kHz`;
+            }
+            return `${Math.round(f)} Hz`;
+        }
+        
+        // Generate interference
+        function genInterference() {
+            const b = BAND_PLAN[Math.floor(Math.random() * BAND_PLAN.length)];
+            const freq = Math.random() * (b.max - b.min) + b.min;
+            const strength = Math.random() * 0.5 + 0.5;
+            const dist = Math.random() * (DETECTION_RANGE - 50) + 50;
+            const ang = Math.random() * Math.PI * 2;
+            const speed = Math.random() * 0.5 + 0.2; // km/s
+            const heading = Math.random() * Math.PI * 2;
+            
+            const geoPos = radarToGeo(dist, ang);
+            const gridRef = calculateGridReference(geoPos[0], geoPos[1]);
+            
+            return {
+                band: b,
+                freq: freq,
+                strength: strength,
+                dist: dist,
+                ang: ang,
+                speed: speed,
+                heading: heading,
+                time: Date.now(),
+                geoPos: geoPos,
+                gridRef: gridRef.grid,
+                isMissile: Math.random() < 0.3 // 30% chance to be a missile
+            };
+        }
+        
+        // Update map markers for interferences
+        function updateMapMarkers() {
+            // Clear existing markers
+            mapMarkers.forEach(marker => map.removeLayer(marker));
+            mapMarkers = [];
+            
+            // Add markers for each interference
+            interferences.forEach(itf => {
+                const marker = L.circleMarker(itf.geoPos, {
+                    color: itf.isMissile ? RED : itf.band.color,
+                    fillColor: itf.isMissile ? RED : itf.band.color,
+                    fillOpacity: 0.7,
+                    radius: 4 + 4 * itf.strength
+                }).addTo(map);
+                
+                // Add tooltip with frequency info
+                let tooltipText = `${formatFreq(itf.freq)} - ${itf.band.name}`;
+                if (itf.isMissile) {
+                    tooltipText += " - MISSILE";
+                }
+                tooltipText += `<br>Grid: ${itf.gridRef}`;
+                
+                marker.bindTooltip(tooltipText, {
+                    permanent: false,
+                    direction: 'top'
+                });
+                
+                mapMarkers.push(marker);
+            });
+        }
+        
+        // Launch rocket
+        function launchRocket(itf) {
+            console.log(`ROCKET LAUNCHED at ${formatFreq(itf.freq)}, dist ${itf.dist.toFixed(1)} km`);
+            rockets_launched++;
+            document.getElementById('rocketCount').textContent = `Rockets Launched: ${rockets_launched}`;
+            
+            // Set as active missile
+            activeMissile = itf;
+            
+            // Create explosion marker on map
+            const explosionMarker = L.circleMarker(itf.geoPos, {
+                color: RED,
+                fillColor: YELLOW,
+                fillOpacity: 0.8,
+                radius: 12
+            }).addTo(map);
+            
+            explosionMarker.bindPopup(`MISSILE DETECTED!<br>Frequency: ${formatFreq(itf.freq)}<br>Grid: ${itf.gridRef}`).openPopup();
+            
+            // Show notification
+            const notification = document.getElementById('notification');
+            notification.textContent = `MISSILE DETECTED at ${formatFreq(itf.freq)}!`;
+            notification.style.display = 'block';
+            
+            setTimeout(() => {
+                notification.style.display = 'none';
+                map.removeLayer(explosionMarker);
+            }, 3000);
+        }
+        
+        // Calculate interception
+        function calculateInterception(missile) {
+            if (!missile) return null;
+            
+            // Simple interception calculation
+            // This is a simplified model - real interception would be more complex
+            const missileSpeed = missile.speed; // km/s
+            const missileDist = missile.dist; // km
+            const missileBearing = missile.ang; // radians
+            
+            // Calculate time to intercept
+            // Using relative motion approximation
+            const relativeSpeed = INTERCEPTOR_SPEED + missileSpeed;
+            const interceptTime = missileDist / relativeSpeed;
+            
+            // Calculate intercept point
+            const interceptDist = INTERCEPTOR_SPEED * interceptTime;
+            const interceptAng = missileBearing;
+            
+            // Convert to geographical coordinates
+            const interceptGeo = radarToGeo(interceptDist, interceptAng);
+            const gridRef = calculateGridReference(interceptGeo[0], interceptGeo[1]);
+            
+            return {
+                time: interceptTime,
+                point: interceptGeo,
+                distance: interceptDist,
+                bearing: interceptAng,
+                gridRef: gridRef.grid
+            };
+        }
+        
+        // Launch interceptor
+        function launchInterceptor() {
+            if (!activeMissile) {
+                alert("No active missile to intercept!");
+                return;
+            }
+            
+            const interception = calculateInterception(activeMissile);
+            if (!interception) return;
+            
+            // Create interceptor object
+            const interceptor = {
+                startTime: Date.now(),
+                interceptTime: interception.time * 1000, // convert to ms
+                target: activeMissile,
+                interceptionPoint: interception.point,
+                currentPos: DEFENSE_CENTER,
+                completed: false
+            };
+            
+            interceptors.push(interceptor);
+            
+            // Update UI
+            document.getElementById('intercept-course').textContent = `${(interception.bearing * 180 / Math.PI).toFixed(1)}°`;
+            document.getElementById('intercept-time').textContent = `${interception.time.toFixed(1)}s`;
+            document.getElementById('intercept-point').textContent = `${interception.point[0].toFixed(4)}, ${interception.point[1].toFixed(4)}`;
+            
+            // Add interceptor marker
+            const marker = L.circleMarker(DEFENSE_CENTER, {
+                color: BLUE,
+                fillColor: BLUE,
+                fillOpacity: 0.8,
+                radius: 6
+            }).addTo(map);
+            
+            marker.bindPopup(`INTERCEPTOR LAUNCHED<br>Target: ${activeMissile.gridRef}<br>ETA: ${interception.time.toFixed(1)}s`);
+            
+            mapMarkers.push(marker);
+            
+            // Show notification
+            const notification = document.getElementById('notification');
+            notification.textContent = `INTERCEPTOR LAUNCHED! ETA: ${interception.time.toFixed(1)}s`;
+            notification.style.display = 'block';
+            notification.style.backgroundColor = 'rgba(0, 0, 255, 0.7)';
+            
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+        
+        // Update interceptors
+        function updateInterceptors() {
+            const now = Date.now();
+            
+            for (let i = 0; i < interceptors.length; i++) {
+                const interceptor = interceptors[i];
+                
+                if (interceptor.completed) continue;
+                
+                const elapsed = now - interceptor.startTime;
+                const progress = Math.min(1, elapsed / interceptor.interceptTime);
+                
+                if (progress >= 1) {
+                    // Interception completed
+                    interceptor.completed = true;
+                    interceptions++;
+                    document.getElementById('interceptCount').textContent = `Interceptions: ${interceptions}`;
+                    
+                    // Remove the missile
+                    const missileIndex = interferences.findIndex(m => m === interceptor.target);
+                    if (missileIndex !== -1) {
+                        interferences.splice(missileIndex, 1);
+                    }
+                    
+                    // Show success notification
+                    const notification = document.getElementById('notification');
+                    notification.textContent = `MISSILE INTERCEPTED!`;
+                    notification.style.display = 'block';
+                    notification.style.backgroundColor = 'rgba(0, 255, 0, 0.7)';
+                    
+                    setTimeout(() => {
+                        notification.style.display = 'none';
+                    }, 3000);
+                    
+                    continue;
+                }
+                
+                // Update interceptor position
+                const currentDist = progress * interception.distance;
+                const currentAng = interception.bearing;
+                interceptor.currentPos = radarToGeo(currentDist, currentAng);
+            }
+        }
+        
+        // Draw radar grid
+        function drawRadarGrid() {
+            radarCtx.clearRect(0, 0, LEFT_W, HEIGHT);
+            
+            // Draw background
+            radarCtx.fillStyle = BLACK;
+            radarCtx.fillRect(0, 0, LEFT_W, HEIGHT);
+            
+            // Draw grid lines
+            radarCtx.strokeStyle = GRIDGRAY;
+            radarCtx.lineWidth = 1;
+            
+            for (let i = 1; i <= 5; i++) {
+                const r = RADAR_RADIUS * i / 5;
+                radarCtx.beginPath();
+                radarCtx.arc(RADAR_CENTER.x, RADAR_CENTER.y, r, 0, Math.PI * 2);
+                radarCtx.stroke();
+                
+                // Draw distance labels
+                radarCtx.fillStyle = LIGHTGRAY;
+                radarCtx.font = "10px monospace";
+                radarCtx.textAlign = "center";
+                radarCtx.fillText(`${i * 100} km`, RADAR_CENTER.x, RADAR_CENTER.y - r - 5);
+            }
+            
+            // Draw crosshairs
+            radarCtx.beginPath();
+            radarCtx.moveTo(RADAR_CENTER.x, 0);
+            radarCtx.lineTo(RADAR_CENTER.x, HEIGHT);
+            radarCtx.moveTo(0, RADAR_CENTER.y);
+            radarCtx.lineTo(LEFT_W, RADAR_CENTER.y);
+            radarCtx.stroke();
+            
+            // Draw bearing labels
+            radarCtx.fillStyle = LIGHTGRAY;
+            radarCtx.font = "10px monospace";
+            for (let i = 0; i < 12; i++) {
+                const ang = i * Math.PI / 6;
+                const x = RADAR_CENTER.x + (RADAR_RADIUS + 15) * Math.sin(ang);
+                const y = RADAR_CENTER.y - (RADAR_RADIUS + 15) * Math.cos(ang);
+                radarCtx.fillText(`${i * 30}°`, x, y);
+            }
+        }
+        
+        // Draw radar sweep
+        function drawRadarSweep() {
+            angle += RADAR_SPEED;
+            const ex = RADAR_CENTER.x + RADAR_RADIUS * Math.cos(angle);
+            const ey = RADAR_CENTER.y + RADAR_RADIUS * Math.sin(angle);
+            
+            radarCtx.strokeStyle = GREEN;
+            radarCtx.lineWidth = 2;
+            radarCtx.beginPath();
+            radarCtx.moveTo(RADAR_CENTER.x, RADAR_CENTER.y);
+            radarCtx.lineTo(ex, ey);
+            radarCtx.stroke();
+            
+            // Draw sweep trail
+            const gradient = radarCtx.createRadialGradient(
+                RADAR_CENTER.x, RADAR_CENTER.y, 0,
+                RADAR_CENTER.x, RADAR_CENTER.y, RADAR_RADIUS
+            );
+            gradient.addColorStop(0, 'rgba(0, 255, 0, 0.2)');
+            gradient.addColorStop(1, 'rgba(0, 255, 0, 0)');
+            
+            radarCtx.fillStyle = gradient;
+            radarCtx.beginPath();
+            radarCtx.moveTo(RADAR_CENTER.x, RADAR_CENTER.y);
+            radarCtx.arc(RADAR_CENTER.x, RADAR_CENTER.y, RADAR_RADIUS, angle - 0.1, angle);
+            radarCtx.closePath();
+            radarCtx.fill();
+        }
+        
+        // Draw interferences on radar
+        function drawInterferences() {
+            const now = Date.now();
+            
+            for (let i = 0; i < interferences.length; i++) {
+                const itf = interferences[i];
+                
+                // Update position if it's a moving missile
+                if (itf.isMissile) {
+                    const elapsed = (now - itf.time) / 1000; // seconds
+                    itf.dist -= itf.speed * elapsed; // Move toward center
+                    itf.time = now;
+                    
+                    // Update geographical position
+                    itf.geoPos = radarToGeo(itf.dist, itf.ang);
+                    itf.gridRef = calculateGridReference(itf.geoPos[0], itf.geoPos[1]);
+                    
+                    // Remove if it reached the center
+                    if (itf.dist < 10) {
+                        // Simulate impact
+                        const notification = document.getElementById('notification');
+                        notification.textContent = `IMPACT! Grid: ${itf.gridRef}`;
+                        notification.style.display = 'block';
+                        
+                        setTimeout(() => {
+                            notification.style.display = 'none';
+                        }, 3000);
+                        
+                        interferences.splice(i, 1);
+                        i--;
+                        continue;
+                    }
+                }
+                
+                const r = (itf.dist / DETECTION_RANGE) * RADAR_RADIUS;
+                const x = RADAR_CENTER.x + r * Math.cos(itf.ang);
+                const y = RADAR_CENTER.y + r * Math.sin(itf.ang);
+                const size = 3 + 4 * itf.strength;
+                
+                // Draw interference
+                radarCtx.fillStyle = itf.isMissile ? RED : itf.band.color;
+                radarCtx.beginPath();
+                radarCtx.arc(x, y, size, 0, Math.PI * 2);
+                radarCtx.fill();
+                
+                // Draw tail for moving objects
+                if (itf.isMissile) {
+                    radarCtx.strokeStyle = RED;
+                    radarCtx.lineWidth = 1;
+                    radarCtx.beginPath();
+                    radarCtx.moveTo(x, y);
+                    radarCtx.lineTo(
+                        x + 10 * Math.cos(itf.ang + Math.PI),
+                        y + 10 * Math.sin(itf.ang + Math.PI)
+                    );
+                    radarCtx.stroke();
+                }
+            }
+        }
+        
+        // Draw signal display
+        function drawSignalDisplay() {
+            const width = signalCanvas.width;
+            const height = signalCanvas.height;
+            
+            signalCtx.clearRect(0, 0, width, height);
+            
+            // Draw background
+            signalCtx.fillStyle = BLACK;
+            signalCtx.fillRect(0, 0, width, height);
+            
+            // Draw grid lines
+            signalCtx.strokeStyle = GRIDGRAY;
+            signalCtx.lineWidth = 1;
+            
+            // Horizontal lines
+            for (let i = 0; i <= 5; i++) {
+                const y = i * height / 5;
+                signalCtx.beginPath();
+                signalCtx.moveTo(0, y);
+                signalCtx.lineTo(width, y);
+                signalCtx.stroke();
+            }
+            
+            // Draw signal
+            if (signalData.length > 0) {
+                signalCtx.strokeStyle = GREEN;
+                signalCtx.lineWidth = 2;
+                signalCtx.beginPath();
+                
+                for (let i = 0; i < signalData.length; i++) {
+                    const x = i * width / signalData.length;
+                    const y = height - signalData[i] * height;
+                    if (i === 0) {
+                        signalCtx.moveTo(x, y);
+                    } else {
+                        signalCtx.lineTo(x, y);
+                    }
+                }
+                
+                signalCtx.stroke();
+            }
+        }
+        
+        // Generate signal data
+        function generateSignalData() {
+            const freq = parseFloat(document.getElementById('frequency').value) * 1e6;
+            const gain = parseInt(document.getElementById('gain').value) / 100;
+            
+            // Find the band for the current frequency
+            let currentBand = null;
+            for (const band of BAND_PLAN) {
+                if (freq >= band.min && freq <= band.max) {
+                    currentBand = band;
+                    break;
+                }
+            }
+            
+            // Generate signal based on band characteristics
+            signalData = [];
+            const length = 100;
+            
+            for (let i = 0; i < length; i++) {
+                let value = Math.random() * 0.2;
+                
+                // Add band-specific characteristics
+                if (currentBand) {
+                    if (currentBand.mode === 'AM') {
+                        value += 0.3 * Math.sin(i / 3) * Math.sin(i / 20);
+                    } else if (currentBand.mode === 'LSB') {
+                        value += 0.2 * Math.sin(i / 2) * Math.sin(i / 15);
+                    }
+                }
+                
+                // Add noise
+                value += Math.random() * 0.1;
+                
+                // Apply gain
+                value *= gain;
+                
+                signalData.push(value);
+            }
+            
+            // Add spikes for interferences
+            interferences.forEach(itf => {
+                // Calculate how close this interference is to our tuned frequency
+                const freqDiff = Math.abs(itf.freq - freq);
+                const freqRatio = 1 - Math.min(1, freqDiff / 500000); // 500 kHz window
+                
+                if (freqRatio > 0.1) {
+                    const pos = Math.floor(Math.random() * (length - 20)) + 10;
+                    const spikeHeight = itf.strength * freqRatio * gain;
+                    
+                    for (let i = -2; i <= 2; i++) {
+                        if (pos + i >= 0 && pos + i < length) {
+                            signalData[pos + i] += spikeHeight * (1 - Math.abs(i) / 3);
+                        }
+                    }
+                }
+            });
+            
+            // Normalize signal
+            const max = Math.max(...signalData);
+            if (max > 0) {
+                for (let i = 0; i < signalData.length; i++) {
+                    signalData[i] /= max;
+                }
+            }
+        }
+        
+        // Main draw function
+        function draw(timestamp) {
+            const deltaTime = timestamp - lastFrameTime;
+            lastFrameTime = timestamp;
+            
+            // Draw radar display
+            drawRadarGrid();
+            drawRadarSweep();
+            drawInterferences();
+            
+            // Update signal data and draw signal display
+            generateSignalData();
+            drawSignalDisplay();
+            
+            // Update map markers
+            updateMapMarkers();
+            
+            // Update interceptors
+            updateInterceptors();
+            
+            // Update grid info for active missile
+            if (activeMissile) {
+                const gridInfo = calculateGridReference(activeMissile.geoPos[0], activeMissile.geoPos[1]);
+                document.getElementById('gridInfo').textContent = `Grid: ${activeMissile.gridRef}`;
+                document.getElementById('distanceInfo').textContent = `Distance: ${gridInfo.distance.toFixed(1)} km`;
+                document.getElementById('bearingInfo').textContent = `Bearing: ${gridInfo.bearing.toFixed(1)}°`;
+            }
+            
+            requestAnimationFrame(draw);
+        }
+        
+        // Initialize the application
+        function init() {
+            initMap();
+            initBandLegend();
+            
+            // Add some initial interferences
+            for (let i = 0; i < 5; i++) {
+                interferences.push(genInterference());
+            }
+            
+            // Set up event listeners
+            document.getElementById('simulateBtn').addEventListener('click', () => {
+                const itf = genInterference();
+                interferences.push(itf);
+                
+                if (itf.isMissile) {
+                    launchRocket(itf);
+                }
+                
+                document.getElementById('interferenceCount').textContent = `Interferences: ${interferences.length}`;
+            });
+            
+            document.getElementById('resetBtn').addEventListener('click', () => {
+                interferences = [];
+                activeMissile = null;
+                document.getElementById('interferenceCount').textContent = `Interferences: 0`;
+                document.getElementById('gridInfo').textContent = `Grid: 0,0`;
+                document.getElementById('distanceInfo').textContent = `Distance: 0 km`;
+                document.getElementById('bearingInfo').textContent = `Bearing: 0°`;
+            });
+            
+            document.getElementById('interceptBtn').addEventListener('click', launchInterceptor);
+            
+            document.addEventListener('keydown', (e) => {
+                if (e.code === 'Space') {
+                    e.preventDefault();
+                    document.getElementById('simulateBtn').click();
+                } else if (e.code === 'KeyI') {
+                    e.preventDefault();
+                    document.getElementById('interceptBtn').click();
+                }
+            });
+            
+            // Set up SDR controls
+            const frequencySlider = document.getElementById('frequency');
+            const frequencyValue = document.getElementById('frequencyValue');
+            const gainSlider = document.getElementById('gain');
+            const gainValue = document.getElementById('gainValue');
+            
+            frequencySlider.addEventListener('input', () => {
+                frequencyValue.textContent = formatFreq(parseFloat(frequencySlider.value) * 1e6);
+            });
+            
+            gainSlider.addEventListener('input', () => {
+                gainValue.textContent = `${gainSlider.value}%`;
+            });
+            
+            // Start animation
+            requestAnimationFrame(draw);
+        }
+        
+        // Start the application
+        window.onload = init;
+    </script>
+</body>
+</html>

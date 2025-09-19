@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cognitive Load Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: auto;
+        }
+        #game-container {
+            width: 800px;
+            min-height: 600px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            position: relative;
+        }
+        #loading {
+            text-align: center;
+            padding: 20px;
+        }
+        .screen {
+            display: none;
+        }
+        .active {
+            display: block;
+        }
+        h1, h2, h3 {
+            text-align: center;
+            color: #333;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 10px;
+            background-color: #add8e6;
+            color: black;
+            border: 2px solid #000;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            text-align: center;
+            transition: background-color 0.3s;
+        }
+        .button:hover {
+            background-color: #00008b;
+            color: white;
+        }
+        .button-green {
+            background-color: #008000;
+            color: white;
+        }
+        .button-red {
+            background-color: #ff0000;
+            color: white;
+        }
+        .word-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .word-item {
+            padding: 10px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .input-box {
+            width: 200px;
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .results-container {
+            display: flex;
+            justify-content: space-between;
+        }
+        .results-column {
+            width: 45%;
+        }
+        .correct {
+            color: green;
+        }
+        .incorrect {
+            color: red;
+        }
+        .slider-container {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .slider {
+            width: 80%;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="loading">
+            <h2>Loading Cognitive Load Test...</h2>
+            <p>Please wait while the game initializes.</p>
+        </div>
+
+        <!-- Intro Screen -->
+        <div id="intro-screen" class="screen">
+            <h1>Cognitive Load Memory Test</h1>
+            <p>This test measures cognitive load through memory tasks.</p>
+            <p>You will be shown words to memorize and then recall.</p>
+            <p>The test will analyze various cognitive load factors.</p>
+            <p>Select an option below to begin.</p>
+            
+            <div style="text-align: center; margin-top: 30px;">
+                <div class="button button-green" id="start-test-btn">Start Test</div>
+                <div class="button" id="explanation-btn">Explanation</div>
+                <div class="button button-red" id="exit-btn">Exit</div>
+            </div>
+        </div>
+
+        <!-- Language Selection Screen -->
+        <div id="language-screen" class="screen">
+            <h1>Select Language</h1>
+            <p>Choose a language for the memory test:</p>
+            
+            <div id="language-buttons" style="text-align: center; margin: 20px 0;">
+                <!-- Language buttons will be added here by JavaScript -->
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px;">
+                <div class="button" id="language-back-btn">Back</div>
+            </div>
+        </div>
+
+        <!-- Memorization Screen -->
+        <div id="memorization-screen" class="screen">
+            <h2>Memorize these <span id="current-language"></span> words:</h2>
+            
+            <div id="word-grid" class="word-grid">
+                <!-- Words will be added here by JavaScript -->
+            </div>
+            
+            <p id="timer-display" style="text-align: center;">Time remaining: 120 seconds</p>
+            
+            <div id="recall-button-container" style="text-align: center; display: none;">
+                <div class="button button-green" id="start-recall-btn">Start Recall</div>
+            </div>
+        </div>
+
+        <!-- Recall Screen -->
+        <div id="recall-screen" class="screen">
+            <h2>Enter the words you remember:</h2>
+            
+            <div id="input-container">
+                <!-- Input boxes will be added here by JavaScript -->
+            </div>
+            
+            <div style="text-align: center; margin-top: 20px;">
+                <div class="button button-green" id="submit-recall-btn">Submit</div>
+            </div>
+        </div>
+
+        <!-- Results Screen -->
+        <div id="results-screen" class="screen">
+            <h1>Test Results</h1>
+            
+            <div class="results-container">
+                <div class="results-column">
+                    <h3>Test Information</h3>
+                    <p id="result-language">Language: </p>
+                    <p id="result-word-count">Word Count: </p>
+                    <p id="result-accuracy">Accuracy: </p>
+                    <p id="result-recall-time">Recall Time: </p>
+                    
+                    <h3>Cognitive Load Metrics</h3>
+                    <p id="result-intrinsic">Intrinsic Load: </p>
+                    <p id="result-extraneous">Extraneous Load: </p>
+                    <p id="result-germane">Germane Load: </p>
+                    <p id="result-rating">Subjective Rating: </p>
+                </div>
+                
+                <div class="results-column">
+                    <h3>Original Words</h3>
+                    <div id="original-words-list"></div>
+                    
+                    <h3>Recalled Words</h3>
+                    <div id="recalled-words-list"></div>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px;">
+                <div class="button" id="new-test-btn">New Test</div>
+                <div class="button button-green" id="export-results-btn">Export Results</div>
+                <div class="button button-red" id="results-exit-btn">Exit</div>
+            </div>
+        </div>
+
+        <!-- Explanation Screen -->
+        <div id="explanation-screen" class="screen">
+            <h1>Cognitive Load Theory</h1>
+            
+            <p>Cognitive Load Theory (CLT) explains how the brain processes and stores information.</p>
+            <p>There are three types of cognitive load:</p>
+            
+            <ul>
+                <li><strong>Intrinsic Load:</strong> Difficulty inherent to the material being learned</li>
+                <li><strong>Extraneous Load:</strong> How the information is presented to the learner</li>
+                <li><strong>Germane Load:</strong> Mental effort used to process and understand the material</li>
+            </ul>
+            
+            <p>This test measures these factors through memory tasks in different languages.</p>
+            <p>The results help understand how different factors affect cognitive load.</p>
+            
+            <div class="slider-container">
+                <h3>Rate your mental effort (1-10)</h3>
+                <input type="range" min="1" max="10" value="5" class="slider" id="rating-slider">
+                <p>Rating: <span id="rating-value">5</span>/10</p>
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px;">
+                <div class="button" id="continue-btn">Continue</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Word banks for different languages (truncated for brevity)
+        const wordBanks = {
+            'English': ['apple', 'book', 'computer', 'dictionary', 'elephant', 'fountain', 'garden', 'hospital', 'island', 'jungle'],
+            'French': ['pomme', 'livre', 'ordinateur', 'dictionnaire', 'éléphant', 'fontaine', 'jardin', 'hôpital', 'île', 'jungle'],
+            'Spanish': ['manzana', 'libro', 'computadora', 'diccionario', 'elefante', 'fuente', 'jardín', 'hospital', 'isla', 'jungla'],
+            'Chinese': ['苹果', '书', '电脑', '字典', '大象', '喷泉', '花园', '医院', '岛', '丛林'],
+            'Korean': ['사과', '책', '컴퓨터', '사전', '코끼리', '분수', '정원', '병원', '섬', '정글'],
+            'Japanese': ['りんご', '本', 'コンピューター', '辞書', '象', '噴水', '庭', '病院', '島', 'ジャングル']
+        };
+
+        class CognitiveLoadTest {
+            constructor() {
+                this.activityLog = [];
+                this.testResults = [];
+                this.currentState = "intro";
+                this.selectedLanguage = null;
+                this.currentTestWords = [];
+                this.recalledWords = [];
+                this.currentWordCount = 10;
+                this.testDuration = 120;
+                this.testStartTime = 0;
+                this.recallStartTime = 0;
+                this.recallTime = 0;
+                this.ratingValue = 5;
+                
+                this.initEventListeners();
+                this.showScreen('intro-screen');
+                document.getElementById('loading').style.display = 'none';
+            }
+            
+            initEventListeners() {
+                // Intro screen buttons
+                document.getElementById('start-test-btn').addEventListener('click', () => this.showLanguageSelection());
+                document.getElementById('explanation-btn').addEventListener('click', () => this.showExplanation());
+                document.getElementById('exit-btn').addEventListener('click', () => this.exitApp());
+                
+                // Language screen buttons
+                document.getElementById('language-back-btn').addEventListener('click', () => this.showScreen('intro-screen'));
+                
+                // Memorization screen buttons
+                document.getElementById('start-recall-btn').addEventListener('click', () => this.startRecallPhase());
+                
+                // Recall screen buttons
+                document.getElementById('submit-recall-btn').addEventListener('click', () => this.evaluateRecall());
+                
+                // Results screen buttons
+                document.getElementById('new-test-btn').addEventListener('click', () => this.showScreen('intro-screen'));
+                document.getElementById('export-results-btn').addEventListener('click', () => this.exportResults());
+                document.getElementById('results-exit-btn').addEventListener('click', () => this.exitApp());
+                
+                // Explanation screen buttons
+                document.getElementById('continue-btn').addEventListener('click', () => this.showScreen('intro-screen'));
+                
+                // Rating slider
+                const slider = document.getElementById('rating-slider');
+                const ratingValue = document.getElementById('rating-value');
+                slider.addEventListener('input', () => {
+                    this.ratingValue = parseInt(slider.value);
+                    ratingValue.textContent = this.ratingValue;
+                });
+            }
+            
+            showScreen(screenId) {
+                // Hide all screens
+                const screens = document.querySelectorAll('.screen');
+                screens.forEach(screen => screen.classList.remove('active'));
+                
+                // Show the requested screen
+                document.getElementById(screenId).classList.add('active');
+                this.currentState = screenId;
+                
+                // Initialize screen content if needed
+                if (screenId === 'language-screen') {
+                    this.initLanguageButtons();
+                } else if (screenId === 'memorization-screen') {
+                    this.startMemorizationPhase();
+                } else if (screenId === 'recall-screen') {
+                    this.initRecallInputs();
+                } else if (screenId === 'results-screen') {
+                    this.displayResults();
+                }
+            }
+            
+            initLanguageButtons() {
+                const container = document.getElementById('language-buttons');
+                container.innerHTML = '';
+                
+                for (const language of Object.keys(wordBanks)) {
+                    const button = document.createElement('div');
+                    button.className = 'button';
+                    button.textContent = language;
+                    button.addEventListener('click', () => this.selectLanguage(language));
+                    container.appendChild(button);
+                }
+            }
+            
+            selectLanguage(language) {
+                this.selectedLanguage = language;
+                this.showScreen('memorization-screen');
+            }
+            
+            startMemorizationPhase() {
+                document.getElementById('current-language').textContent = this.selectedLanguage;
+                
+                // Select random words
+                this.currentTestWords = this.getRandomWords(this.selectedLanguage, this.currentWordCount);
+                
+                // Display words
+                const wordGrid = document.getElementById('word-grid');
+                wordGrid.innerHTML = '';
+                
+                this.currentTestWords.forEach(word => {
+                    const wordElement = document.createElement('div');
+                    wordElement.className = 'word-item';
+                    wordElement.textContent = word;
+                    wordGrid.appendChild(wordElement);
+                });
+                
+                // Start timer
+                this.testStartTime = Date.now();
+                this.startTimer();
+                
+                // Show recall button after 10 seconds
+                setTimeout(() => {
+                    document.getElementById('recall-button-container').style.display = 'block';
+                }, 10000);
+            }
+            
+            startTimer() {
+                const timerDisplay = document.getElementById('timer-display');
+                const startTime = Date.now();
+                const endTime = startTime + (this.testDuration * 1000);
+                
+                const timerInterval = setInterval(() => {
+                    const currentTime = Date.now();
+                    const remaining = Math.max(0, endTime - currentTime);
+                    const seconds = Math.floor(remaining / 1000);
+                    
+                    timerDisplay.textContent = `Time remaining: ${seconds} seconds`;
+                    
+                    if (remaining <= 0) {
+                        clearInterval(timerInterval);
+                        this.startRecallPhase();
+                    }
+                }, 1000);
+            }
+            
+            startRecallPhase() {
+                this.recallStartTime = Date.now();
+                this.showScreen('recall-screen');
+            }
+            
+            initRecallInputs() {
+                const container = document.getElementById('input-container');
+                container.innerHTML = '';
+                
+                for (let i = 0; i < this.currentWordCount; i++) {
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.className = 'input-box';
+                    input.placeholder = `Word ${i + 1}`;
+                    container.appendChild(input);
+                }
+            }
+            
+            evaluateRecall() {
+                this.recallTime = (Date.now() - this.recallStartTime) / 1000;
+                
+                // Get recalled words
+                const inputs = document.querySelectorAll('.input-box');
+                this.recalledWords = Array.from(inputs).map(input => input.value.trim().toLowerCase());
+                
+                // Calculate accuracy
+                const lowerCaseTestWords = this.currentTestWords.map(word => word.toLowerCase());
+                let correctCount = 0;
+                
+                for (const word of this.recalledWords) {
+                    if (word && lowerCaseTestWords.includes(word)) {
+                        correctCount++;
+                    }
+                }
+                
+                const accuracy = (correctCount / this.currentTestWords.length) * 100;
+                
+                // Measure cognitive load
+                const cognitiveLoadMetrics = this.measureCognitiveLoad(
+                    this.currentWordCount, 
+                    this.selectedLanguage, 
+                    correctCount
+                );
+                
+                // Store results
+                const result = {
+                    language: this.selectedLanguage,
+                    wordCount: this.currentWordCount,
+                    testWords: this.currentTestWords,
+                    recalledWords: this.recalledWords,
+                    accuracy: accuracy,
+                    recallTime: this.recallTime,
+                    cognitiveLoad: cognitiveLoadMetrics
+                };
+                
+                this.testResults.push(result);
+                this.showScreen('results-screen');
+            }
+            
+            displayResults() {
+                const result = this.testResults[this.testResults.length - 1];
+                
+                // Display basic results
+                document.getElementById('result-language').textContent = `Language: ${result.language}`;
+                document.getElementById('result-word-count').textContent = `Word Count: ${result.wordCount}`;
+                document.getElementById('result-accuracy').textContent = `Accuracy: ${result.accuracy.toFixed(2)}%`;
+                document.getElementById('result-recall-time').textContent = `Recall Time: ${result.recallTime.toFixed(2)} seconds`;
+                
+                // Display cognitive load metrics
+                document.getElementById('result-intrinsic').textContent = `Intrinsic Load: ${result.cognitiveLoad.intrinsicLoad.toFixed(2)}`;
+                document.getElementById('result-extraneous').textContent = `Extraneous Load: ${result.cognitiveLoad.extraneousLoad.toFixed(2)}`;
+                document.getElementById('result-germane').textContent = `Germane Load: ${result.cognitiveLoad.germaneLoad.toFixed(2)}`;
+                document.getElementById('result-rating').textContent = `Subjective Rating: ${result.cognitiveLoad.subjectiveRating}/10`;
+                
+                // Display original and recalled words
+                const originalWordsList = document.getElementById('original-words-list');
+                originalWordsList.innerHTML = '';
+                
+                const recalledWordsList = document.getElementById('recalled-words-list');
+                recalledWordsList.innerHTML = '';
+                
+                const lowerCaseRecalledWords = result.recalledWords.map(word => word.toLowerCase());
+                
+                result.testWords.forEach(word => {
+                    const wordElement = document.createElement('div');
+                    wordElement.textContent = word;
+                    wordElement.className = lowerCaseRecalledWords.includes(word.toLowerCase()) ? 'correct' : 'incorrect';
+                    originalWordsList.appendChild(wordElement);
+                });
+                
+                result.recalledWords.forEach(word => {
+                    const wordElement = document.createElement('div');
+                    wordElement.textContent = word || "(empty)";
+                    wordElement.className = word && result.testWords.map(w => w.toLowerCase()).includes(word.toLowerCase()) ? 'correct' : 'incorrect';
+                    recalledWordsList.appendChild(wordElement);
+                });
+            }
+            
+            measureCognitiveLoad(wordCount, language, recallAccuracy) {
+                // Intrinsic load: based on language complexity
+                const languageComplexity = {
+                    'English': 1.0, 'French': 1.2, 'Spanish': 1.1, 
+                    'Chinese': 1.5, 'Korean': 1.4, 'Japanese': 1.3
+                };
+                const intrinsicLoad = wordCount * languageComplexity[language];
+                
+                // Extraneous load: based on presentation factors
+                const extraneousLoad = wordCount * 0.8;
+                
+                // Germane load: based on learning efficiency
+                const germaneLoad = recallAccuracy * wordCount * 0.7;
+                
+                // Calculate reaction time
+                const reactionTime = (wordCount * 0.5) + (wordCount - recallAccuracy) * 0.3;
+                
+                // Error rate
+                const errorRate = (wordCount - recallAccuracy) / wordCount * 100;
+                
+                return {
+                    intrinsicLoad: intrinsicLoad,
+                    extraneousLoad: extraneousLoad,
+                    germaneLoad: germaneLoad,
+                    subjectiveRating: this.ratingValue,
+                    reactionTime: reactionTime,
+                    errorRate: errorRate
+                };
+            }
+            
+            exportResults() {
+                if (this.testResults.length === 0) return;
+                
+                let csvContent = "Timestamp,Language,Word Count,Accuracy,Recall Time,Intrinsic Load,Extraneous Load,Germane Load,Subjective Rating,Reaction Time,Error Rate\n";
+                
+                const timestamp = new Date().toISOString();
+                const result = this.testResults[this.testResults.length - 1];
+                
+                csvContent += `${timestamp},${result.language},${result.wordCount},${result.accuracy.toFixed(2)},${result.recallTime.toFixed(2)},${result.cognitiveLoad.intrinsicLoad.toFixed(2)},${result.cognitiveLoad.extraneousLoad.toFixed(2)},${result.cognitiveLoad.germaneLoad.toFixed(2)},${result.cognitiveLoad.subjectiveRating},${result.cognitiveLoad.reactionTime.toFixed(2)},${result.cognitiveLoad.errorRate.toFixed(2)}\n`;
+                
+                const encodedUri = encodeURI("data:text/csv;charset=utf-8," + csvContent);
+                const link = document.createElement("a");
+                link.setAttribute("href", encodedUri);
+                link.setAttribute("download", "cognitive_load_test_results.csv");
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+            
+            showLanguageSelection() {
+                this.showScreen('language-screen');
+            }
+            
+            showExplanation() {
+                this.showScreen('explanation-screen');
+            }
+            
+            exitApp() {
+                if (confirm("Are you sure you want to exit?")) {
+                    window.close();
+                }
+            }
+            
+            getRandomWords(language, count) {
+                const words = [...wordBanks[language]];
+                const selected = [];
+                
+                for (let i = 0; i < count && words.length > 0; i++) {
+                    const randomIndex = Math.floor(Math.random() * words.length);
+                    selected.push(words.splice(randomIndex, 1)[0]);
+                }
+                
+                return selected;
+            }
+            
+            logActivity(activity, details = null) {
+                const timestamp = new Date().toISOString();
+                const logEntry = {
+                    timestamp: timestamp,
+                    activity: activity,
+                    details: details
+                };
+                this.activityLog.push(logEntry);
+                console.log(`[${timestamp}] ${activity}: ${details || ''}`);
+            }
+        }
+
+        // Initialize the application when the page loads
+        window.addEventListener('load', () => {
+            new CognitiveLoadTest();
+        });
+    </script>
+</body>
+</html>

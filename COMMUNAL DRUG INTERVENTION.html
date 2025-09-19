@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cannabis Dependence Recovery Tracker</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-color: #4CAF50;
+            --secondary-color: #2196F3;
+            --accent-color: #FF9800;
+            --light-color: #F5F5F5;
+            --dark-color: #333;
+            --success-color: #8BC34A;
+            --warning-color: #FFC107;
+            --danger-color: #F44336;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f9f9f9;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+            border-radius: 0 0 20px 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card-title {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+            border-bottom: 2px solid var(--light-color);
+            padding-bottom: 0.5rem;
+        }
+        
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-block;
+            text-align: center;
+        }
+        
+        .btn:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-secondary {
+            background-color: var(--secondary-color);
+        }
+        
+        .btn-accent {
+            background-color: var(--accent-color);
+        }
+        
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--dark-color);
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border 0.3s ease;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--secondary-color);
+            outline: none;
+        }
+        
+        .progress-container {
+            margin: 2rem 0;
+        }
+        
+        .progress-bar {
+            height: 20px;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+        
+        .session-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        
+        .session-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            border-left: 5px solid var(--primary-color);
+        }
+        
+        .session-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        }
+        
+        .session-card.completed {
+            border-left-color: var(--success-color);
+        }
+        
+        .session-card.current {
+            border-left-color: var(--accent-color);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 152, 0, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 152, 0, 0); }
+        }
+        
+        .chart-container {
+            height: 300px;
+            margin: 2rem 0;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .nav {
+            display: flex;
+            justify-content: center;
+            margin: 2rem 0;
+        }
+        
+        .nav-item {
+            margin: 0 0.5rem;
+        }
+        
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin: 0.5rem 0;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 3rem;
+            padding: 2rem 0;
+            color: #666;
+            border-top: 1px solid #eee;
+        }
+        
+        @media (max-width: 768px) {
+            .session-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .summary-stats {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Cannabis Dependence Recovery Tracker</h1>
+            <p class="subtitle">A 12-month program to monitor usage and support recovery</p>
+        </div>
+    </header>
+    
+    <div class="container">
+        <div id="personal-info-section" class="card">
+            <h2 class="card-title">Personal Information</h2>
+            <form id="personal-info-form">
+                <div class="form-group">
+                    <label for="name">Full Name</label>
+                    <input type="text" id="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="age">Age</label>
+                    <input type="number" id="age" min="18" max="100" required>
+                </div>
+                <div class="form-group">
+                    <label for="use-history">Brief History of Cannabis Use</label>
+                    <textarea id="use-history" rows="3" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="recovery-goals">What are your main recovery goals?</label>
+                    <textarea id="recovery-goals" rows="3" required></textarea>
+                </div>
+                <button type="submit" class="btn">Save Information</button>
+            </form>
+        </div>
+        
+        <div id="dashboard-section" class="hidden">
+            <div class="card">
+                <h2 class="card-title">Recovery Progress</h2>
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill" style="width: 0%;"></div>
+                    </div>
+                    <p id="progress-text">Session 0 of 12 completed</p>
+                </div>
+                
+                <div class="summary-stats">
+                    <div class="stat-card">
+                        <div class="stat-label">Days Used This Month</div>
+                        <div class="stat-value" id="days-used-stat">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Craving Intensity</div>
+                        <div class="stat-value" id="craving-stat">0/10</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Money Saved</div>
+                        <div class="stat-value" id="money-saved-stat">$0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Mood Improvement</div>
+                        <div class="stat-value" id="mood-stat">+0</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2 class="card-title">Progress Charts</h2>
+                <div class="chart-container">
+                    <canvas id="progress-chart"></canvas>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2 class="card-title">Monthly Sessions</h2>
+                <p>Track your progress through each monthly session. Complete one session per month to monitor your recovery journey.</p>
+                
+                <div class="session-cards" id="session-cards">
+                    <!-- Session cards will be generated here -->
+                </div>
+                
+                <div class="nav">
+                    <button class="btn btn-accent" id="conduct-session-btn">Conduct Current Session</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="session-modal" class="hidden">
+            <div class="card">
+                <h2 class="card-title" id="session-modal-title">Session 1</h2>
+                
+                <div class="form-group">
+                    <label for="days-used">How many days did you use cannabis this month? (0-31)</label>
+                    <input type="number" id="days-used" min="0" max="31" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="avg-grams">Average grams used per day (if any)</label>
+                    <input type="number" id="avg-grams" min="0" step="0.1" value="0">
+                </div>
+                
+                <div class="form-group">
+                    <label for="money-spent">Approximate money spent on cannabis this month ($)</label>
+                    <input type="number" id="money-spent" min="0" step="0.01" value="0">
+                </div>
+                
+                <div class="form-group">
+                    <label for="craving-intensity">Average craving intensity (0-10, where 0 is none, 10 is extreme)</label>
+                    <input type="number" id="craving-intensity" min="0" max="10" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="mood-rating">Overall mood rating (0-10, where 0 is very poor, 10 is excellent)</label>
+                    <input type="number" id="mood-rating" min="0" max="10" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="stress-level">Average stress level (0-10, where 0 is no stress, 10 is extreme stress)</label>
+                    <input type="number" id="stress-level" min="0" max="10" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="challenges">What were your biggest challenges this month?</label>
+                    <textarea id="challenges" rows="3" required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="successes">What successes would you like to celebrate this month?</label>
+                    <textarea id="successes" rows="3" required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="next-goal">What is your main goal for next month?</label>
+                    <textarea id="next-goal" rows="2" required></textarea>
+                </div>
+                
+                <div class="nav">
+                    <button class="btn" id="save-session-btn">Save Session</button>
+                    <button class="btn btn-secondary" id="cancel-session-btn">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <div class="container">
+            <p>Cannabis Dependence Recovery Tracker &copy; 2023 | Based on evidence-based recovery principles</p>
+            <p>This tool is for informational purposes only and does not replace professional medical advice.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Data management
+        let userData = {
+            personalInfo: {},
+            sessions: {},
+            goals: {},
+            currentSession: 1
+        };
+        
+        // DOM elements
+        const personalInfoSection = document.getElementById('personal-info-section');
+        const dashboardSection = document.getElementById('dashboard-section');
+        const sessionModal = document.getElementById('session-modal');
+        const sessionCardsContainer = document.getElementById('session-cards');
+        const progressFill = document.getElementById('progress-fill');
+        const progressText = document.getElementById('progress-text');
+        
+        // Initialize the application
+        function initApp() {
+            // Check if data exists in localStorage
+            const savedData = localStorage.getItem('cannabisRecoveryData');
+            if (savedData) {
+                userData = JSON.parse(savedData);
+                
+                // If personal info exists, show dashboard
+                if (userData.personalInfo && Object.keys(userData.personalInfo).length > 0) {
+                    showDashboard();
+                }
+            }
+            
+            // Set up event listeners
+            document.getElementById('personal-info-form').addEventListener('submit', savePersonalInfo);
+            document.getElementById('conduct-session-btn').addEventListener('click', showSessionModal);
+            document.getElementById('save-session-btn').addEventListener('click', saveSession);
+            document.getElementById('cancel-session-btn').addEventListener('click', hideSessionModal);
+            
+            // Render session cards
+            renderSessionCards();
+        }
+        
+        // Save personal information
+        function savePersonalInfo(e) {
+            e.preventDefault();
+            
+            userData.personalInfo = {
+                name: document.getElementById('name').value,
+                age: document.getElementById('age').value,
+                startDate: new Date().toISOString(),
+                useHistory: document.getElementById('use-history').value,
+                recoveryGoals: document.getElementById('recovery-goals').value
+            };
+            
+            saveData();
+            showDashboard();
+        }
+        
+        // Show dashboard
+        function showDashboard() {
+            personalInfoSection.classList.add('hidden');
+            dashboardSection.classList.remove('hidden');
+            
+            updateProgress();
+            updateStats();
+            renderCharts();
+        }
+        
+        // Update progress bar
+        function updateProgress() {
+            const completedSessions = Object.keys(userData.sessions).length;
+            const progressPercent = (completedSessions / 12) * 100;
+            
+            progressFill.style.width = `${progressPercent}%`;
+            progressText.textContent = `Session ${completedSessions} of 12 completed`;
+        }
+        
+        // Update summary statistics
+        function updateStats() {
+            const currentSession = userData.currentSession;
+            const lastSession = userData.sessions[currentSession - 1] || {};
+            
+            document.getElementById('days-used-stat').textContent = lastSession.daysUsed || 0;
+            document.getElementById('craving-stat').textContent = `${lastSession.cravingIntensity || 0}/10`;
+            
+            // Calculate money saved (assuming $10/gram)
+            let totalSpent = 0;
+            Object.values(userData.sessions).forEach(session => {
+                totalSpent += session.moneySpent || 0;
+            });
+            document.getElementById('money-saved-stat').textContent = `$${totalSpent.toFixed(2)}`;
+            
+            // Calculate mood improvement
+            const firstSession = userData.sessions[1] || {};
+            const moodImprovement = (lastSession.moodRating || 0) - (firstSession.moodRating || 0);
+            document.getElementById('mood-stat').textContent = moodImprovement > 0 ? `+${moodImprovement}` : moodImprovement;
+        }
+        
+        // Render session cards
+        function renderSessionCards() {
+            sessionCardsContainer.innerHTML = '';
+            
+            for (let i = 1; i <= 12; i++) {
+                const session = userData.sessions[i] || {};
+                const sessionCard = document.createElement('div');
+                sessionCard.className = 'session-card';
+                
+                if (session.date) {
+                    sessionCard.classList.add('completed');
+                } else if (i === userData.currentSession) {
+                    sessionCard.classList.add('current');
+                }
+                
+                sessionCard.innerHTML = `
+                    <h3>Session ${i}</h3>
+                    <p>${session.date ? `Completed: ${new Date(session.date).toLocaleDateString()}` : 'Not yet started'}</p>
+                    ${session.daysUsed ? `<p>Days used: ${session.daysUsed}</p>` : ''}
+                    ${session.cravingIntensity ? `<p>Craving: ${session.cravingIntensity}/10</p>` : ''}
+                `;
+                
+                sessionCardsContainer.appendChild(sessionCard);
+            }
+        }
+        
+        // Show session modal
+        function showSessionModal() {
+            sessionModal.classList.remove('hidden');
+            document.getElementById('session-modal-title').textContent = `Session ${userData.currentSession}`;
+            
+            // Pre-fill with existing data if available
+            const currentSession = userData.sessions[userData.currentSession] || {};
+            document.getElementById('days-used').value = currentSession.daysUsed || '';
+            document.getElementById('avg-grams').value = currentSession.avgGrams || '';
+            document.getElementById('money-spent').value = currentSession.moneySpent || '';
+            document.getElementById('craving-intensity').value = currentSession.cravingIntensity || '';
+            document.getElementById('mood-rating').value = currentSession.moodRating || '';
+            document.getElementById('stress-level').value = currentSession.stressLevel || '';
+            document.getElementById('challenges').value = currentSession.challenges || '';
+            document.getElementById('successes').value = currentSession.successes || '';
+            document.getElementById('next-goal').value = userData.goals[userData.currentSession + 1] || '';
+        }
+        
+        // Hide session modal
+        function hideSessionModal() {
+            sessionModal.classList.add('hidden');
+        }
+        
+        // Save session data
+        function saveSession() {
+            userData.sessions[userData.currentSession] = {
+                date: new Date().toISOString(),
+                daysUsed: parseInt(document.getElementById('days-used').value),
+                avgGrams: parseFloat(document.getElementById('avg-grams').value) || 0,
+                moneySpent: parseFloat(document.getElementById('money-spent').value) || 0,
+                cravingIntensity: parseInt(document.getElementById('craving-intensity').value),
+                moodRating: parseInt(document.getElementById('mood-rating').value),
+                stressLevel: parseInt(document.getElementById('stress-level').value),
+                challenges: document.getElementById('challenges').value,
+                successes: document.getElementById('successes').value
+            };
+            
+            // Set goal for next session if not the last one
+            if (userData.currentSession < 12) {
+                userData.goals[userData.currentSession + 1] = document.getElementById('next-goal').value;
+            }
+            
+            // Move to next session if not the last one
+            if (userData.currentSession < 12) {
+                userData.currentSession++;
+            }
+            
+            saveData();
+            hideSessionModal();
+            updateProgress();
+            updateStats();
+            renderCharts();
+            renderSessionCards();
+        }
+        
+        // Render progress charts
+        function renderCharts() {
+            const sessions = Array.from({length: 12}, (_, i) => i + 1);
+            const daysUsed = sessions.map(s => userData.sessions[s]?.daysUsed || 0);
+            const cravingIntensity = sessions.map(s => userData.sessions[s]?.cravingIntensity || 0);
+            const moodRating = sessions.map(s => userData.sessions[s]?.moodRating || 0);
+            
+            const ctx = document.getElementById('progress-chart').getContext('2d');
+            
+            if (window.progressChart) {
+                window.progressChart.destroy();
+            }
+            
+            window.progressChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: sessions.map(s => `Session ${s}`),
+                    datasets: [
+                        {
+                            label: 'Days Used',
+                            data: daysUsed,
+                            borderColor: '#F44336',
+                            backgroundColor: 'rgba(244, 67, 54, 0.1)',
+                            tension: 0.3,
+                            fill: true
+                        },
+                        {
+                            label: 'Craving Intensity (0-10)',
+                            data: cravingIntensity,
+                            borderColor: '#2196F3',
+                            backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                            tension: 0.3,
+                            fill: true
+                        },
+                        {
+                            label: 'Mood Rating (0-10)',
+                            data: moodRating,
+                            borderColor: '#4CAF50',
+                            backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                            tension: 0.3,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 10
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Save data to localStorage
+        function saveData() {
+            localStorage.setItem('cannabisRecoveryData', JSON.stringify(userData));
+        }
+        
+        // Initialize the application when the DOM is loaded
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>

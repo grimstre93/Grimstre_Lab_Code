@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rocket Theodolite System - GRIMSTRE</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #34495e;
+            --accent: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --danger: #c0392b;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            grid-template-rows: 60px 1fr 30px;
+            grid-template-areas: 
+                "header header"
+                "sidebar main"
+                "footer footer";
+            height: 100vh;
+        }
+        
+        header {
+            grid-area: header;
+            background-color: var(--primary);
+            color: white;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .logo {
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        
+        .status-bar {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .battery {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .battery-level {
+            width: 40px;
+            height: 20px;
+            border: 2px solid white;
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .battery-level::before {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            height: 16px;
+            width: calc(80% - 4px);
+            background-color: var(--success);
+            border-radius: 2px;
+        }
+        
+        .battery-level::after {
+            content: '';
+            position: absolute;
+            top: 6px;
+            right: -4px;
+            width: 4px;
+            height: 8px;
+            background-color: white;
+            border-radius: 0 2px 2px 0;
+        }
+        
+        .gps-status {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .gps-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: var(--success);
+        }
+        
+        .sidebar {
+            grid-area: sidebar;
+            background-color: var(--secondary);
+            color: white;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .sidebar-section {
+            margin-bottom: 25px;
+        }
+        
+        .sidebar-title {
+            font-size: 1rem;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .input-group {
+            margin-bottom: 15px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+        
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 8px;
+            border: none;
+            border-radius: 4px;
+            background-color: rgba(255,255,255,0.1);
+            color: white;
+        }
+        
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            background-color: var(--accent);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .btn:hover {
+            background-color: #c0392b;
+        }
+        
+        .btn-secondary {
+            background-color: var(--dark);
+        }
+        
+        .btn-secondary:hover {
+            background-color: #1a2530;
+        }
+        
+        .rocket-status {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: rgba(0,0,0,0.2);
+            border-radius: 4px;
+        }
+        
+        .rocket-count {
+            font-weight: bold;
+        }
+        
+        main {
+            grid-area: main;
+            padding: 20px;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto 1fr;
+            gap: 20px;
+            grid-template-areas: 
+                "map drone"
+                "log data";
+        }
+        
+        .map-container {
+            grid-area: map;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        #map {
+            width: 100%;
+            height: 400px;
+        }
+        
+        .map-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 1000;
+        }
+        
+        .map-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: white;
+            border: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            z-index: 1000;
+        }
+        
+        .drone-container {
+            grid-area: drone;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .drone-feed {
+            width: 100%;
+            height: 400px;
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #7f8c8d;
+        }
+        
+        .drone-controls {
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .drone-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .drone-btn {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 4px;
+            background-color: var(--secondary);
+            color: white;
+            cursor: pointer;
+        }
+        
+        .data-container {
+            grid-area: data;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .data-title {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .data-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .data-item {
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+        }
+        
+        .data-label {
+            font-size: 0.8rem;
+            color: #7f8c8d;
+            margin-bottom: 5px;
+        }
+        
+        .data-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        
+        .impact-area {
+            grid-column: 1 / -1;
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #fff4f4;
+            border-radius: 6px;
+            border-left: 4px solid var(--accent);
+        }
+        
+        .log-container {
+            grid-area: log;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .log-title {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .log-entries {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .log-entry {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .log-time {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        
+        .log-message {
+            flex: 1;
+            margin-left: 10px;
+        }
+        
+        .firmware-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .firmware-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 600px;
+            max-height: 80%;
+            overflow-y: auto;
+        }
+        
+        .firmware-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .firmware-code {
+            font-family: monospace;
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            max-height: 300px;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        footer {
+            grid-area: footer;
+            background-color: var(--dark);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.8rem;
+        }
+        
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+                grid-template-areas: 
+                    "header"
+                    "main"
+                    "footer";
+            }
+            
+            .sidebar {
+                display: none;
+            }
+            
+            main {
+                grid-template-columns: 1fr;
+                grid-template-areas: 
+                    "map"
+                    "drone"
+                    "data"
+                    "log";
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">GRIMSTRE - Rocket Theodolite System</div>
+            <div class="status-bar">
+                <div class="gps-status">
+                    <div class="gps-indicator"></div>
+                    <span>GPS Online</span>
+                </div>
+                <div class="battery">
+                    <span>Battery</span>
+                    <div class="battery-level"></div>
+                </div>
+                <div class="time">12:45:23 UTC</div>
+            </div>
+        </header>
+        
+        <aside class="sidebar">
+            <div class="sidebar-section">
+                <h3 class="sidebar-title">COORDINATE INPUT</h3>
+                <div class="input-group">
+                    <label for="lat">Latitude</label>
+                    <input type="text" id="lat" value="34.0522° N">
+                </div>
+                <div class="input-group">
+                    <label for="long">Longitude</label>
+                    <input type="text" id="long" value="118.2437° W">
+                </div>
+                <div class="input-group">
+                    <label for="elevation">Elevation (m)</label>
+                    <input type="number" id="elevation" value="71">
+                </div>
+                <div class="input-group">
+                    <label for="target-lat">Target Latitude</label>
+                    <input type="text" id="target-lat" value="34.0635° N">
+                </div>
+                <div class="input-group">
+                    <label for="target-long">Target Longitude</label>
+                    <input type="text" id="target-long" value="118.2305° W">
+                </div>
+                <div class="input-group">
+                    <label for="target-elevation">Target Elevation (m)</label>
+                    <input type="number" id="target-elevation" value="85">
+                </div>
+                <button class="btn" id="calculate-btn">Calculate Trajectory</button>
+                <button class="btn btn-secondary" id="gps-btn">Use Current GPS</button>
+            </div>
+            
+            <div class="sidebar-section">
+                <h3 class="sidebar-title">DRONE CONTROL</h3>
+                <div class="input-group">
+                    <label for="drone-lat">Drone Latitude</label>
+                    <input type="text" id="drone-lat" value="34.0522° N">
+                </div>
+                <div class="input-group">
+                    <label for="drone-long">Drone Longitude</label>
+                    <input type="text" id="drone-long" value="118.2437° W">
+                </div>
+                <div class="input-group">
+                    <label for="drone-alt">Drone Altitude (m)</label>
+                    <input type="number" id="drone-alt" value="100">
+                </div>
+                <button class="btn" id="update-drone-btn">Update Drone Position</button>
+                <button class="btn btn-secondary" id="generate-firmware-btn">Generate Drone Firmware</button>
+            </div>
+            
+            <div class="sidebar-section">
+                <h3 class="sidebar-title">LAUNCHER STATUS</h3>
+                <div class="rocket-status">
+                    <span>Total Barrels:</span>
+                    <span class="rocket-count">40</span>
+                </div>
+                <div class="rocket-status">
+                    <span>Rockets Available:</span>
+                    <span class="rocket-count">28</span>
+                </div>
+                <div class="rocket-status">
+                    <span>Rockets Launched:</span>
+                    <span class="rocket-count">12</span>
+                </div>
+                <div class="input-group">
+                    <label for="reload-count">Rockets to Reload</label>
+                    <input type="number" id="reload-count" min="1" max="40" value="5">
+                </div>
+                <button class="btn btn-secondary" id="reload-btn">Reload Rockets</button>
+            </div>
+            
+            <div class="sidebar-section">
+                <h3 class="sidebar-title">LAUNCH CONTROL</h3>
+                <div class="input-group">
+                    <label for="rockets-to-fire">Rockets to Fire</label>
+                    <input type="number" id="rockets-to-fire" min="1" max="40" value="1">
+                </div>
+                <div class="input-group">
+                    <label for="fire-interval">Fire Interval (s)</label>
+                    <input type="number" id="fire-interval" min="0.5" max="10" step="0.5" value="2.0">
+                </div>
+                <button class="btn" id="fire-btn">FIRE ROCKETS</button>
+            </div>
+            
+            <div class="sidebar-section">
+                <h3 class="sidebar-title">MAP TOOLS</h3>
+                <button class="btn btn-secondary" id="import-map">Import OSM Map</button>
+                <button class="btn btn-secondary" id="export-map">Export Map Data</button>
+                <button class="btn btn-secondary" id="export-data">Export All Data</button>
+            </div>
+        </aside>
+        
+        <main>
+            <section class="map-container">
+                <div id="map"></div>
+                <div class="map-controls">
+                    <button class="map-btn" id="zoom-in">+</button>
+                    <button class="map-btn" id="zoom-out">-</button>
+                    <button class="map-btn" id="center-map">⌖</button>
+                </div>
+            </section>
+            
+            <section class="drone-container">
+                <div class="drone-feed">
+                    <video id="drone-video" width="100%" height="100%" autoplay muted style="display: none;"></video>
+                    <div id="drone-placeholder">Drone Live Feed</div>
+                </div>
+                <div class="drone-controls">
+                    <div class="drone-buttons">
+                        <button class="drone-btn" id="start-drone-feed">Start Feed</button>
+                        <button class="drone-btn" id="stop-drone-feed">Stop Feed</button>
+                        <button class="drone-btn" id="simulate-drone">Simulate Drone</button>
+                    </div>
+                    <div class="input-group">
+                        <label for="drone-speed">Drone Speed (m/s)</label>
+                        <input type="range" id="drone-speed" min="1" max="20" value="5">
+                        <span id="drone-speed-value">5 m/s</span>
+                    </div>
+                </div>
+            </section>
+            
+            <section class="data-container">
+                <h3 class="data-title">TRAJECTORY DATA</h3>
+                <div class="data-grid">
+                    <div class="data-item">
+                        <div class="data-label">Range</div>
+                        <div class="data-value">3.42 km</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Azimuth</div>
+                        <div class="data-value">145.6°</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Elevation Angle</div>
+                        <div class="data-value">47.8°</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Estimated Apogee</div>
+                        <div class="data-value">1.24 km</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Time of Flight</div>
+                        <div class="data-value">42.6 s</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Impact Velocity</div>
+                        <div class="data-value">283 m/s</div>
+                    </div>
+                    <div class="impact-area">
+                        <div class="data-label">Estimated Impact Area</div>
+                        <div class="data-value">150m radius circle</div>
+                        <div class="data-label">Dispersion: 35m CEP</div>
+                    </div>
+                </div>
+            </section>
+            
+            <section class="log-container">
+                <h3 class="log-title">ACTIVITY LOG</h3>
+                <div class="log-entries">
+                    <div class="log-entry">
+                        <div class="log-time">12:43:15</div>
+                        <div class="log-message">System initialized - GPS signal acquired</div>
+                    </div>
+                    <div class="log-entry">
+                        <div class="log-time">12:43:22</div>
+                        <div class="log-message">Coordinates entered manually: 34.0522° N, 118.2437° W</div>
+                    </div>
+                    <div class="log-entry">
+                        <div class="log-time">12:43:45</div>
+                        <div class="log-message">Target coordinates set: 34.0635° N, 118.2305° W</div>
+                    </div>
+                    <div class="log-entry">
+                        <div class="log-time">12:44:10</div>
+                        <div class="log-message">Trajectory calculated - Range: 3.42km, TOF: 42.6s</div>
+                    </div>
+                </div>
+            </section>
+        </main>
+        
+        <footer>
+            <div class="footer-text">GRIMSTRE Digital Tools - Rocket Theodolite System v2.1 | Maximum Range: 100km | Inspired by Chunmoo, Pinaka, Grad, HIMARS</div>
+        </footer>
+    </div>
+
+    <div class="firmware-modal" id="firmware-modal">
+        <div class="firmware-content">
+            <div class="firmware-header">
+                <h3>Drone Firmware Code</h3>
+                <button class="close-btn" id="close-firmware">&times;</button>
+            </div>
+            <div class="firmware-code" id="firmware-code">
+                // Firmware code will be generated here
+            </div>
+            <div style="margin-top: 15px;">
+                <button class="btn" id="download-firmware">Download Firmware</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script>
+        // Initialize map
+        let map = L.map('map').setView([34.0522, -118.2437], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+        
+        // Add markers
+        let currentPositionMarker = L.marker([34.0522, -118.2437]).addTo(map)
+            .bindPopup('Current Position')
+            .openPopup();
+            
+        let targetMarker = L.marker([34.0635, -118.2305]).addTo(map)
+            .bindPopup('Target Position');
+            
+        let droneMarker = L.marker([34.0522, -118.2437], {
+            icon: L.icon({
+                iconUrl: 'https://cdn-icons-png.flaticon.com/512/1693/1693670.png',
+                iconSize: [30, 30],
+                iconAnchor: [15, 15]
+            })
+        }).addTo(map).bindPopup('Drone Position');
+        
+        // Draw trajectory line
+        let trajectoryLine = L.polyline([
+            [34.0522, -118.2437],
+            [34.0635, -118.2305]
+        ], {color: 'red', dashArray: '5, 10'}).addTo(map);
+        
+        // Update time
+        function updateTime() {
+            const now = new Date();
+            const timeString = now.toUTCString().split(' ')[4];
+            document.querySelector('.time').textContent = timeString + ' UTC';
+        }
+        
+        setInterval(updateTime, 1000);
+        updateTime();
+        
+        // Battery simulation
+        function simulateBattery() {
+            const batteryLevel = document.querySelector('.battery-level');
+            let level = 80; // Start at 80%
+            
+            setInterval(() => {
+                level -= 0.1; // Slowly decrease battery
+                if (level < 5) level = 100; // Reset when very low (for demo)
+                
+                batteryLevel.style.setProperty('--battery-level', level + '%');
+                
+                // Change color based on level
+                if (level > 50) {
+                    batteryLevel.style.backgroundColor = '#27ae60';
+                } else if (level > 20) {
+                    batteryLevel.style.backgroundColor = '#f39c12';
+                } else {
+                    batteryLevel.style.backgroundColor = '#c0392b';
+                }
+            }, 5000);
+        }
+        
+        simulateBattery();
+        
+        // Drone simulation
+        let droneSimulationInterval = null;
+        let droneVideoStream = null;
+        
+        function startDroneSimulation() {
+            if (droneSimulationInterval) clearInterval(droneSimulationInterval);
+            
+            const speed = parseInt(document.getElementById('drone-speed').value);
+            const latInput = document.getElementById('drone-lat');
+            const longInput = document.getElementById('drone-long');
+            const altInput = document.getElementById('drone-alt');
+            
+            // Parse current drone position
+            let currentLat = parseFloat(latInput.value);
+            let currentLong = parseFloat(longInput.value);
+            let currentAlt = parseInt(altInput.value);
+            
+            // Target position (from target inputs)
+            const targetLat = parseFloat(document.getElementById('target-lat').value);
+            const targetLong = parseFloat(document.getElementById('target-long').value);
+            
+            droneSimulationInterval = setInterval(() => {
+                // Move drone toward target
+                const latDiff = targetLat - currentLat;
+                const longDiff = targetLong - currentLong;
+                
+                // Calculate distance
+                const distance = Math.sqrt(latDiff * latDiff + longDiff * longDiff);
+                
+                if (distance > 0.001) { // 0.001 degrees is approx 100m
+                    // Move a step toward target
+                    const stepSize = speed * 0.00001; // Adjust for reasonable movement
+                    currentLat += (latDiff / distance) * stepSize;
+                    currentLong += (longDiff / distance) * stepSize;
+                    
+                    // Update inputs and marker
+                    latInput.value = currentLat.toFixed(6) + '° N';
+                    longInput.value = Math.abs(currentLong).toFixed(6) + '° W';
+                    droneMarker.setLatLng([currentLat, currentLong]);
+                    
+                    // Random altitude change
+                    currentAlt += (Math.random() - 0.5) * 10;
+                    altInput.value = Math.max(50, Math.min(500, currentAlt));
+                    
+                    addLogEntry(`Drone moving to target: ${currentLat.toFixed(6)}, ${currentLong.toFixed(6)}, ${currentAlt}m`);
+                } else {
+                    addLogEntry('Drone reached target position');
+                    clearInterval(droneSimulationInterval);
+                    droneSimulationInterval = null;
+                }
+            }, 1000);
+        }
+        
+        function stopDroneSimulation() {
+            if (droneSimulationInterval) {
+                clearInterval(droneSimulationInterval);
+                droneSimulationInterval = null;
+                addLogEntry('Drone simulation stopped');
+            }
+            
+            if (droneVideoStream) {
+                const tracks = droneVideoStream.getTracks();
+                tracks.forEach(track => track.stop());
+                droneVideoStream = null;
+                
+                document.getElementById('drone-video').style.display = 'none';
+                document.getElementById('drone-placeholder').style.display = 'block';
+            }
+        }
+        
+        function simulateDroneFeed() {
+            // In a real application, this would connect to an actual drone video feed
+            // For demo purposes, we'll simulate a feed with a placeholder
+            
+            document.getElementById('drone-placeholder').style.display = 'none';
+            const video = document.getElementById('drone-video');
+            video.style.display = 'block';
+            
+            // Simulate video feed with a static image or test pattern
+            video.src = 'https://source.unsplash.com/random/800x600/?drone,aerial';
+            video.play().catch(e => console.log('Video play failed:', e));
+            
+            addLogEntry('Drone video feed simulation started');
+        }
+        
+        // Generate drone firmware
+        function generateDroneFirmware() {
+            const lat = parseFloat(document.getElementById('drone-lat').value);
+            const long = parseFloat(document.getElementById('drone-long').value);
+            const alt = parseInt(document.getElementById('drone-alt').value);
+            const speed = parseInt(document.getElementById('drone-speed').value);
+            
+            const targetLat = parseFloat(document.getElementById('target-lat').value);
+            const targetLong = parseFloat(document.getElementById('target-long').value);
+            
+            const firmwareCode = `/*
+ * Drone Autopilot Firmware
+ * Generated: ${new Date().toISOString()}
+ * Coordinates: ${lat}, ${long}
+ * Target: ${targetLat}, ${targetLong}
+ */
+
+#include <Arduino.h>
+#include <GPS.h>
+#include <Gyro.h>
+#include <MotorControl.h>
+
+// Configuration
+#define TARGET_LAT ${targetLat}f
+#define TARGET_LON ${targetLong}f
+#define CRUISE_ALTITUDE ${alt}
+#define MAX_SPEED ${speed}
+
+GPS gps;
+Gyro gyro;
+MotorControl motors;
+
+void setup() {
+    Serial.begin(9600);
+    gps.init();
+    gyro.calibrate();
+    motors.initialize();
+    
+    Serial.println("Drone autopilot initialized");
+    Serial.print("Target coordinates: ");
+    Serial.print(TARGET_LAT, 6);
+    Serial.print(", ");
+    Serial.println(TARGET_LON, 6);
+}
+
+void navigateToTarget(float currentLat, float currentLon) {
+    float latDiff = TARGET_LAT - currentLat;
+    float lonDiff = TARGET_LON - currentLon;
+    
+    float distance = sqrt(latDiff * latDiff + lonDiff * lonDiff);
+    
+    if (distance < 0.0001) { // Approximately 10 meters
+        motors.hover();
+        Serial.println("Target reached");
+        return;
+    }
+    
+    // Calculate bearing
+    float bearing = atan2(lonDiff, latDiff) * 180 / PI;
+    if (bearing < 0) bearing += 360;
+    
+    // Adjust motors based on bearing and gyro readings
+    gyro.update();
+    float currentHeading = gyro.getHeading();
+    float headingError = bearing - currentHeading;
+    
+    // PID control for heading (simplified)
+    motors.adjustHeading(headingError);
+    
+    // Maintain altitude
+    motors.maintainAltitude(CRUISE_ALTITUDE);
+    
+    // Set forward speed proportional to distance
+    float speed = min(MAX_SPEED, distance * 1000);
+    motors.setForwardSpeed(speed);
+}
+
+void loop() {
+    if (gps.fixAcquired()) {
+        float currentLat = gps.getLatitude();
+        float currentLon = gps.getLongitude();
+        float currentAlt = gps.getAltitude();
+        
+        navigateToTarget(currentLat, currentLon);
+        
+        // Log position every 5 seconds
+        static unsigned long lastLog = 0;
+        if (millis() - lastLog > 5000) {
+            Serial.print("Position: ");
+            Serial.print(currentLat, 6);
+            Serial.print(", ");
+            Serial.print(currentLon, 6);
+            Serial.print(" Alt: ");
+            Serial.println(currentAlt);
+            lastLog = millis();
+        }
+    } else {
+        motors.hover();
+        Serial.println("Waiting for GPS fix...");
+    }
+    
+    delay(100);
+}`;
+
+            document.getElementById('firmware-code').textContent = firmwareCode;
+            document.getElementById('firmware-modal').style.display = 'flex';
+        }
+        
+        function downloadFirmware() {
+            const firmwareCode = document.getElementById('firmware-code').textContent;
+            const blob = new Blob([firmwareCode], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'drone_autopilot.ino';
+            document.body.appendChild(a);
+            a.click();
+            
+            // Clean up
+            setTimeout(() => {
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 100);
+            
+            addLogEntry('Drone firmware downloaded');
+        }
+        
+        // OSM Map import/export functions
+        function importOSMMap() {
+            addLogEntry('Importing OSM map data...');
+            // In a real application, this would load map data from a file or API
+            // For demo, we'll just simulate by adding some random markers
+            
+            for (let i = 0; i < 5; i++) {
+                const randomLat = 34.0522 + (Math.random() - 0.5) * 0.1;
+                const randomLon = -118.2437 + (Math.random() - 0.5) * 0.1;
+                
+                L.marker([randomLat, randomLon])
+                    .addTo(map)
+                    .bindPopup(`Imported Point ${i+1}`)
+                    .openPopup();
+            }
+            
+            addLogEntry('OSM map data imported successfully');
+        }
+        
+        function exportMapData() {
+            addLogEntry('Exporting map data...');
+            
+            // Collect all marker positions
+            const markers = [];
+            map.eachLayer(layer => {
+                if (layer instanceof L.Marker) {
+                    const latlng = layer.getLatLng();
+                    markers.push({
+                        lat: latlng.lat,
+                        lng: latlng.lng,
+                        name: layer.getPopup() ? layer.getPopup().getContent() : 'Unknown'
+                    });
+                }
+            });
+            
+            // Create JSON data
+            const mapData = {
+                exportDate: new Date().toISOString(),
+                center: map.getCenter(),
+                zoom: map.getZoom(),
+                markers: markers
+            };
+            
+            // Create download
+            const dataStr = JSON.stringify(mapData, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'map_data_export.json';
+            document.body.appendChild(a);
+            a.click();
+            
+            // Clean up
+            setTimeout(() => {
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 100);
+            
+            addLogEntry('Map data exported successfully');
+        }
+        
+        function exportAllData() {
+            addLogEntry('Exporting all system data...');
+            
+            // Collect all data from the system
+            const systemData = {
+                exportDate: new Date().toISOString(),
+                coordinates: {
+                    current: {
+                        lat: document.getElementById('lat').value,
+                        long: document.getElementById('long').value,
+                        elevation: document.getElementById('elevation').value
+                    },
+                    target: {
+                        lat: document.getElementById('target-lat').value,
+                        long: document.getElementById('target-long').value,
+                        elevation: document.getElementById('target-elevation').value
+                    },
+                    drone: {
+                        lat: document.getElementById('drone-lat').value,
+                        long: document.getElementById('drone-long').value,
+                        altitude: document.getElementById('drone-alt').value
+                    }
+                },
+                trajectory: {
+                    range: document.querySelectorAll('.data-value')[0].textContent,
+                    azimuth: document.querySelectorAll('.data-value')[1].textContent,
+                    elevation: document.querySelectorAll('.data-value')[2].textContent,
+                    apogee: document.querySelectorAll('.data-value')[3].textContent,
+                    timeOfFlight: document.querySelectorAll('.data-value')[4].textContent,
+                    impactVelocity: document.querySelectorAll('.data-value')[5].textContent
+                },
+                systemStatus: {
+                    battery: document.querySelector('.battery-level').style.getPropertyValue('--battery-level'),
+                    rocketsAvailable: document.querySelectorAll('.rocket-count')[1].textContent,
+                    rocketsLaunched: document.querySelectorAll('.rocket-count')[2].textContent
+                }
+            };
+            
+            // Create download
+            const dataStr = JSON.stringify(systemData, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'system_data_export.json';
+            document.body.appendChild(a);
+            a.click();
+            
+            // Clean up
+            setTimeout(() => {
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 100);
+            
+            addLogEntry('All system data exported successfully');
+        }
+        
+        // Add entry to activity log
+        function addLogEntry(message) {
+            const now = new Date();
+            const timeString = now.toTimeString().split(' ')[0];
+            
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            logEntry.innerHTML = `
+                <div class="log-time">${timeString}</div>
+                <div class="log-message">${message}</div>
+            `;
+            
+            const logContainer = document.querySelector('.log-entries');
+            logContainer.prepend(logEntry);
+            
+            // Keep only the last 50 entries
+            if (logContainer.children.length > 50) {
+                logContainer.removeChild(logContainer.lastChild);
+            }
+        }
+        
+        // Event listeners
+        document.getElementById('calculate-btn').addEventListener('click', function() {
+            addLogEntry('Trajectory calculation initiated with current coordinates');
+            
+            // Simulate calculation delay
+            setTimeout(() => {
+                // Update some values randomly for demonstration
+                const range = (3 + Math.random() * 0.5).toFixed(2);
+                const apogee = (1.2 + Math.random() * 0.1).toFixed(2);
+                const tof = (40 + Math.random() * 5).toFixed(1);
+                
+                document.querySelectorAll('.data-value')[0].textContent = range + ' km';
+                document.querySelectorAll('.data-value')[3].textContent = apogee + ' km';
+                document.querySelectorAll('.data-value')[4].textContent = tof + ' s';
+                
+                addLogEntry('Trajectory calculated - Range: ' + range + 'km, Apogee: ' + apogee + 'km, TOF: ' + tof + 's');
+                
+                // Update trajectory line
+                const currentLat = parseFloat(document.getElementById('lat').value);
+                const currentLong = parseFloat(document.getElementById('long').value);
+                const targetLat = parseFloat(document.getElementById('target-lat').value);
+                const targetLong = parseFloat(document.getElementById('target-long').value);
+                
+                trajectoryLine.setLatLngs([
+                    [currentLat, currentLong],
+                    [targetLat, targetLong]
+                ]);
+                
+                // Update markers
+                currentPositionMarker.setLatLng([currentLat, currentLong]);
+                targetMarker.setLatLng([targetLat, targetLong]);
+            }, 1000);
+        });
+        
+        document.getElementById('gps-btn').addEventListener('click', function() {
+            // Simulate GPS coordinates
+            const lat = (34 + Math.random() * 0.1).toFixed(4);
+            const long = (-118.2 - Math.random() * 0.1).toFixed(4);
+            
+            document.getElementById('lat').value = lat + '° N';
+            document.getElementById('long').value = long + '° W';
+            
+            // Update map marker
+            currentPositionMarker.setLatLng([lat, long]);
+            
+            addLogEntry('GPS coordinates acquired: ' + lat + '° N, ' + long + '° W');
+        });
+        
+        document.getElementById('update-drone-btn').addEventListener('click', function() {
+            const lat = parseFloat(document.getElementById('drone-lat').value);
+            const long = parseFloat(document.getElementById('drone-long').value);
+            
+            droneMarker.setLatLng([lat, long]);
+            addLogEntry('Drone position updated: ' + lat + '° N, ' + long + '° W');
+        });
+        
+        document.getElementById('fire-btn').addEventListener('click', function() {
+            const rocketCount = document.getElementById('rockets-to-fire').value;
+            const interval = document.getElementById('fire-interval').value;
+            
+            if (rocketCount > 0) {
+                addLogEntry('Launch sequence initiated for ' + rocketCount + ' rockets');
+                
+                // Simulate rocket launches with intervals
+                let launched = 0;
+                const launchInterval = setInterval(() => {
+                    if (launched < rocketCount) {
+                        launched++;
+                        addLogEntry('Rocket ' + launched + ' fired - Electrical trigger activated');
+                        
+                        // Update rocket counts
+                        const available = document.querySelectorAll('.rocket-count')[1];
+                        const launchedCount = document.querySelectorAll('.rocket-count')[2];
+                        
+                        available.textContent = parseInt(available.textContent) - 1;
+                        launchedCount.textContent = parseInt(launchedCount.textContent) + 1;
+                    } else {
+                        clearInterval(launchInterval);
+                    }
+                }, interval * 1000);
+            }
+        });
+        
+        document.getElementById('reload-btn').addEventListener('click', function() {
+            const reloadCount = document.getElementById('reload-count').value;
+            
+            if (reloadCount > 0) {
+                const available = document.querySelectorAll('.rocket-count')[1];
+                const currentCount = parseInt(available.textContent);
+                const newCount = currentCount + parseInt(reloadCount);
+                
+                if (newCount <= 40) {
+                    available.textContent = newCount;
+                    addLogEntry(reloadCount + ' rockets reloaded. Total available: ' + newCount);
+                } else {
+                    addLogEntry('Cannot reload ' + reloadCount + ' rockets. Maximum capacity is 40.');
+                }
+            }
+        });
+        
+        // Map controls
+        document.getElementById('zoom-in').addEventListener('click', function() {
+            map.zoomIn();
+            addLogEntry('Map zoom level increased');
+        });
+        
+        document.getElementById('zoom-out').addEventListener('click', function() {
+            map.zoomOut();
+            addLogEntry('Map zoom level decreased');
+        });
+        
+        document.getElementById('center-map').addEventListener('click', function() {
+            const currentLat = parseFloat(document.getElementById('lat').value);
+            const currentLong = parseFloat(document.getElementById('long').value);
+            map.setView([currentLat, currentLong], 13);
+            addLogEntry('Map centered on current position');
+        });
+        
+        // Drone controls
+        document.getElementById('start-drone-feed').addEventListener('click', simulateDroneFeed);
+        document.getElementById('stop-drone-feed').addEventListener('click', stopDroneSimulation);
+        document.getElementById('simulate-drone').addEventListener('click', startDroneSimulation);
+        
+        document.getElementById('drone-speed').addEventListener('input', function() {
+            document.getElementById('drone-speed-value').textContent = this.value + ' m/s';
+        });
+        
+        // Firmware controls
+        document.getElementById('generate-firmware-btn').addEventListener('click', generateDroneFirmware);
+        document.getElementById('close-firmware').addEventListener('click', function() {
+            document.getElementById('firmware-modal').style.display = 'none';
+        });
+        document.getElementById('download-firmware').addEventListener('click', downloadFirmware);
+        
+        // Map tools
+        document.getElementById('import-map').addEventListener('click', importOSMMap);
+        document.getElementById('export-map').addEventListener('click', exportMapData);
+        document.getElementById('export-data').addEventListener('click', exportAllData);
+        
+        // Initialize
+        addLogEntry('Rocket Theodolite System initialized with OSM maps and drone control');
+    </script>
+</body>
+</html>

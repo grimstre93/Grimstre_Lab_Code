@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual Rocket Theodolite System - GRIMSTRE</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #34495e;
+            --accent: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --danger: #c0392b;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            display: grid;
+            grid-template-columns: 1fr;
+            grid-template-rows: 60px auto 30px;
+            grid-template-areas: 
+                "header"
+                "main"
+                "footer";
+            min-height: 100vh;
+        }
+        
+        header {
+            grid-area: header;
+            background-color: var(--primary);
+            color: white;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .logo {
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        
+        .status-bar {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .battery {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .battery-level {
+            width: 40px;
+            height: 20px;
+            border: 2px solid white;
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .battery-level::before {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            height: 16px;
+            width: calc(80% - 4px);
+            background-color: var(--success);
+            border-radius: 2px;
+        }
+        
+        .battery-level::after {
+            content: '';
+            position: absolute;
+            top: 6px;
+            right: -4px;
+            width: 4px;
+            height: 8px;
+            background-color: white;
+            border-radius: 0 2px 2px 0;
+        }
+        
+        .gps-status {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .gps-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: var(--success);
+        }
+        
+        main {
+            grid-area: main;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .panel {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .panel-title {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .input-group {
+            margin-bottom: 15px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+            color: #555;
+        }
+        
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+        
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            background-color: var(--accent);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-bottom: 10px;
+        }
+        
+        .btn:hover {
+            background-color: #c0392b;
+        }
+        
+        .btn-secondary {
+            background-color: var(--dark);
+        }
+        
+        .btn-secondary:hover {
+            background-color: #1a2530;
+        }
+        
+        .btn-disabled {
+            background-color: #7f8c8d;
+            cursor: not-allowed;
+        }
+        
+        .btn-disabled:hover {
+            background-color: #7f8c8d;
+        }
+        
+        .rocket-status {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        
+        .rocket-count {
+            font-weight: bold;
+        }
+        
+        .data-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .data-item {
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+        }
+        
+        .data-label {
+            font-size: 0.8rem;
+            color: #7f8c8d;
+            margin-bottom: 5px;
+        }
+        
+        .data-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        
+        .impact-area {
+            grid-column: 1 / -1;
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #fff4f4;
+            border-radius: 6px;
+            border-left: 4px solid var(--accent);
+        }
+        
+        .range-indicator {
+            margin-top: 5px;
+            font-size: 0.9rem;
+        }
+        
+        .range-valid {
+            color: var(--success);
+        }
+        
+        .range-invalid {
+            color: var(--danger);
+        }
+        
+        .log-entries {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 15px;
+        }
+        
+        .log-entry {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .log-time {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        
+        .log-message {
+            flex: 1;
+            margin-left: 10px;
+        }
+        
+        footer {
+            grid-area: footer;
+            background-color: var(--dark);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.8rem;
+        }
+        
+        @media (max-width: 768px) {
+            main {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">GRIMSTRE - Manual Rocket Theodolite System</div>
+            <div class="status-bar">
+                <div class="gps-status">
+                    <div class="gps-indicator"></div>
+                    <span>GPS Online</span>
+                </div>
+                <div class="battery">
+                    <span>Battery</span>
+                    <div class="battery-level"></div>
+                </div>
+                <div class="time">12:45:23 UTC</div>
+            </div>
+        </header>
+        
+        <main>
+            <div class="panel">
+                <h3 class="panel-title">COORDINATE INPUT</h3>
+                <div class="input-group">
+                    <label for="lat">Latitude</label>
+                    <input type="text" id="lat" value="34.0522° N">
+                </div>
+                <div class="input-group">
+                    <label for="long">Longitude</label>
+                    <input type="text" id="long" value="118.2437° W">
+                </div>
+                <div class="input-group">
+                    <label for="elevation">Elevation (m)</label>
+                    <input type="number" id="elevation" value="71">
+                </div>
+                <div class="input-group">
+                    <label for="target-lat">Target Latitude</label>
+                    <input type="text" id="target-lat" value="34.0635° N">
+                </div>
+                <div class="input-group">
+                    <label for="target-long">Target Longitude</label>
+                    <input type="text" id="target-long" value="118.2305° W">
+                </div>
+                <div class="input-group">
+                    <label for="target-elevation">Target Elevation (m)</label>
+                    <input type="number" id="target-elevation" value="85">
+                </div>
+                <button class="btn" id="calculate-btn">Calculate Trajectory</button>
+                <button class="btn btn-secondary" id="gps-btn">Use Current GPS</button>
+            </div>
+            
+            <div class="panel">
+                <h3 class="panel-title">LAUNCHER STATUS</h3>
+                <div class="rocket-status">
+                    <span>Total Barrels:</span>
+                    <span class="rocket-count">40</span>
+                </div>
+                <div class="rocket-status">
+                    <span>Rockets Available:</span>
+                    <span class="rocket-count">28</span>
+                </div>
+                <div class="rocket-status">
+                    <span>Rockets Launched:</span>
+                    <span class="rocket-count">12</span>
+                </div>
+                <div class="input-group">
+                    <label for="reload-count">Rockets to Reload</label>
+                    <input type="number" id="reload-count" min="1" max="40" value="5">
+                </div>
+                <button class="btn btn-secondary" id="reload-btn">Reload Rockets</button>
+            </div>
+            
+            <div class="panel">
+                <h3 class="panel-title">LAUNCH CONTROL</h3>
+                <div class="input-group">
+                    <label for="rockets-to-fire">Rockets to Fire</label>
+                    <input type="number" id="rockets-to-fire" min="1" max="40" value="1">
+                </div>
+                <div class="input-group">
+                    <label for="fire-interval">Fire Interval (s)</label>
+                    <input type="number" id="fire-interval" min="0.5" max="10" step="0.5" value="2.0">
+                </div>
+                <button class="btn" id="fire-btn">FIRE ROCKETS</button>
+                <div id="range-validation" class="range-indicator range-valid">Target within 100km range</div>
+            </div>
+            
+            <div class="panel">
+                <h3 class="panel-title">TRAJECTORY DATA</h3>
+                <div class="data-grid">
+                    <div class="data-item">
+                        <div class="data-label">Range</div>
+                        <div class="data-value">3.42 km</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Azimuth</div>
+                        <div class="data-value">145.6°</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Elevation Angle</div>
+                        <div class="data-value">47.8°</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Estimated Apogee</div>
+                        <div class="data-value">1.24 km</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Time of Flight</div>
+                        <div class="data-value">42.6 s</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Impact Velocity</div>
+                        <div class="data-value">283 m/s</div>
+                    </div>
+                    <div class="impact-area">
+                        <div class="data-label">Estimated Impact Area</div>
+                        <div class="data-value">150m radius circle</div>
+                        <div class="data-label">Dispersion: 35m CEP</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="panel">
+                <h3 class="panel-title">ACTIVITY LOG</h3>
+                <div class="log-entries">
+                    <div class="log-entry">
+                        <div class="log-time">12:43:15</div>
+                        <div class="log-message">System initialized - GPS signal acquired</div>
+                    </div>
+                    <div class="log-entry">
+                        <div class="log-time">12:43:22</div>
+                        <div class="log-message">Coordinates entered manually: 34.0522° N, 118.2437° W</div>
+                    </div>
+                    <div class="log-entry">
+                        <div class="log-time">12:43:45</div>
+                        <div class="log-message">Target coordinates set: 34.0635° N, 118.2305° W</div>
+                    </div>
+                    <div class="log-entry">
+                        <div class="log-time">12:44:10</div>
+                        <div class="log-message">Trajectory calculated - Range: 3.42km, TOF: 42.6s</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <footer>
+            <div class="footer-text">GRIMSTRE Digital Tools - Manual Rocket Theodolite System v2.1 | Maximum Range: 100km</div>
+        </footer>
+    </div>
+
+    <script>
+        // Update time
+        function updateTime() {
+            const now = new Date();
+            const timeString = now.toUTCString().split(' ')[4];
+            document.querySelector('.time').textContent = timeString + ' UTC';
+        }
+        
+        setInterval(updateTime, 1000);
+        updateTime();
+        
+        // Battery simulation
+        function simulateBattery() {
+            const batteryLevel = document.querySelector('.battery-level');
+            let level = 80; // Start at 80%
+            
+            setInterval(() => {
+                level -= 0.1; // Slowly decrease battery
+                if (level < 5) level = 100; // Reset when very low (for demo)
+                
+                batteryLevel.style.setProperty('--battery-level', level + '%');
+                
+                // Change color based on level
+                if (level > 50) {
+                    batteryLevel.style.backgroundColor = '#27ae60';
+                } else if (level > 20) {
+                    batteryLevel.style.backgroundColor = '#f39c12';
+                } else {
+                    batteryLevel.style.backgroundColor = '#c0392b';
+                }
+            }, 5000);
+        }
+        
+        simulateBattery();
+        
+        // Calculate distance between two coordinates using Haversine formula
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371; // Earth's radius in kilometers
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = 
+                Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            const distance = R * c; // Distance in kilometers
+            return distance;
+        }
+        
+        // Validate if target is within 100km range
+        function validateTargetRange() {
+            const currentLat = parseFloat(document.getElementById('lat').value);
+            const currentLong = parseFloat(document.getElementById('long').value);
+            const targetLat = parseFloat(document.getElementById('target-lat').value);
+            const targetLong = parseFloat(document.getElementById('target-long').value);
+            
+            const distance = calculateDistance(currentLat, currentLong, targetLat, targetLong);
+            const rangeIndicator = document.getElementById('range-validation');
+            const fireBtn = document.getElementById('fire-btn');
+            
+            if (distance <= 100) {
+                rangeIndicator.textContent = `Target within range (${distance.toFixed(2)} km)`;
+                rangeIndicator.className = 'range-indicator range-valid';
+                fireBtn.classList.remove('btn-disabled');
+                fireBtn.disabled = false;
+                return true;
+            } else {
+                rangeIndicator.textContent = `Target out of range (${distance.toFixed(2)} km)`;
+                rangeIndicator.className = 'range-indicator range-invalid';
+                fireBtn.classList.add('btn-disabled');
+                fireBtn.disabled = true;
+                return false;
+            }
+        }
+        
+        // Add log entry
+        function addLogEntry(message) {
+            const logEntries = document.querySelector('.log-entries');
+            const now = new Date();
+            const timeString = now.toTimeString().split(' ')[0];
+            
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            logEntry.innerHTML = `
+                <div class="log-time">${timeString}</div>
+                <div class="log-message">${message}</div>
+            `;
+            
+            logEntries.prepend(logEntry);
+            
+            // Keep only the last 20 entries
+            while (logEntries.children.length > 20) {
+                logEntries.removeChild(logEntries.lastChild);
+            }
+        }
+        
+        // Event listeners
+        document.getElementById('calculate-btn').addEventListener('click', () => {
+            validateTargetRange();
+            addLogEntry('Trajectory calculated for target coordinates');
+        });
+        
+        document.getElementById('gps-btn').addEventListener('click', () => {
+            // Simulate getting GPS coordinates
+            const lat = 34.0522 + (Math.random() - 0.5) * 0.01;
+            const long = -118.2437 + (Math.random() - 0.5) * 0.01;
+            
+            document.getElementById('lat').value = lat.toFixed(6) + '° N';
+            document.getElementById('long').value = Math.abs(long).toFixed(6) + '° W';
+            
+            addLogEntry(`Updated current position from GPS: ${lat.toFixed(6)}, ${long.toFixed(6)}`);
+            validateTargetRange();
+        });
+        
+        document.getElementById('fire-btn').addEventListener('click', () => {
+            if (validateTargetRange()) {
+                const rocketCount = parseInt(document.getElementById('rockets-to-fire').value);
+                const interval = parseFloat(document.getElementById('fire-interval').value);
+                
+                addLogEntry(`Firing ${rocketCount} rockets with ${interval}s interval`);
+                
+                // Simulate rocket firing
+                let fired = 0;
+                const fireInterval = setInterval(() => {
+                    fired++;
+                    addLogEntry(`Rocket ${fired} launched`);
+                    
+                    // Update rocket count
+                    const availableElement = document.querySelectorAll('.rocket-count')[1];
+                    const available = parseInt(availableElement.textContent) - 1;
+                    availableElement.textContent = available;
+                    
+                    const launchedElement = document.querySelectorAll('.rocket-count')[2];
+                    const launched = parseInt(launchedElement.textContent) + 1;
+                    launchedElement.textContent = launched;
+                    
+                    if (fired >= rocketCount) {
+                        clearInterval(fireInterval);
+                    }
+                }, interval * 1000);
+            }
+        });
+        
+        document.getElementById('reload-btn').addEventListener('click', () => {
+            const reloadCount = parseInt(document.getElementById('reload-count').value);
+            
+            // Update rocket count
+            const availableElement = document.querySelectorAll('.rocket-count')[1];
+            const available = parseInt(availableElement.textContent) + reloadCount;
+            availableElement.textContent = available;
+            
+            addLogEntry(`Reloaded ${reloadCount} rockets`);
+        });
+        
+        // Initialize range validation
+        validateTargetRange();
+        
+        // Add initial log entries
+        addLogEntry('System initialized - GPS signal acquired');
+        addLogEntry('Coordinates entered manually: 34.0522° N, 118.2437° W');
+        addLogEntry('Target coordinates set: 34.0635° N, 118.2305° W');
+        addLogEntry('Trajectory calculated - Range: 3.42km, TOF: 42.6s');
+    </script>
+</body>
+</html>

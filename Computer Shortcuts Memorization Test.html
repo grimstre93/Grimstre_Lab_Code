@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Computer Shortcuts Memorization Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        body {
+            background-color: #191928;
+            color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        #game-container {
+            width: 100%;
+            max-width: 800px;
+            background-color: #252538;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            padding: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        
+        #start-screen {
+            display: flex;
+        }
+        
+        h1 {
+            color: #64b4ff;
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+            text-shadow: 0 0 10px rgba(100, 180, 255, 0.5);
+        }
+        
+        h2 {
+            color: #64b4ff;
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+        }
+        
+        p {
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+        
+        .instructions {
+            margin-bottom: 30px;
+            max-width: 600px;
+        }
+        
+        .button {
+            background-color: #329966;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            border-radius: 12px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s;
+            border: 3px solid #64b4ff;
+        }
+        
+        .button:hover {
+            background-color: #47aa80;
+            transform: scale(1.05);
+        }
+        
+        .timer {
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: #64b4ff;
+            margin: 20px 0;
+        }
+        
+        .timer-warning {
+            color: #dc7864;
+        }
+        
+        .shortcuts-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            width: 100%;
+            max-width: 600px;
+            margin: 20px 0;
+        }
+        
+        .shortcut-item {
+            background-color: #2d2d45;
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #3a3a5a;
+        }
+        
+        .shortcut {
+            font-size: 1.4rem;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .function {
+            color: #4682b4;
+            font-size: 1.1rem;
+        }
+        
+        .test-item {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 25px;
+            width: 100%;
+            max-width: 600px;
+            text-align: left;
+        }
+        
+        .test-function {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+        
+        .answer-input {
+            background-color: #2d2d45;
+            border: 2px solid #64b4ff;
+            border-radius: 8px;
+            padding: 12px;
+            color: white;
+            font-size: 1.1rem;
+            width: 100%;
+        }
+        
+        .results-container {
+            width: 100%;
+            max-width: 600px;
+        }
+        
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding: 12px;
+            border-radius: 8px;
+            background-color: #2d2d45;
+        }
+        
+        .correct {
+            color: #64c864;
+        }
+        
+        .incorrect {
+            color: #dc7864;
+        }
+        
+        .score-display {
+            font-size: 1.5rem;
+            margin: 20px 0;
+        }
+        
+        .category-title {
+            color: #64b4ff;
+            margin: 15px 0;
+            font-size: 1.4rem;
+        }
+        
+        .level-indicator {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background-color: #64b4ff;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+        
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            h2 {
+                font-size: 1.5rem;
+            }
+            
+            .button {
+                padding: 12px 24px;
+                font-size: 1.1rem;
+            }
+            
+            .timer {
+                font-size: 1.8rem;
+            }
+            
+            .shortcut {
+                font-size: 1.2rem;
+            }
+            
+            .function {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div class="screen" id="start-screen">
+            <h1>Shortcut Memorization Test</h1>
+            <div class="instructions">
+                <p>You will go through 5 levels of computer shortcut tests.</p>
+                <p>Each level focuses on a different category of shortcuts.</p>
+                <p>You will have 30 seconds to memorize shortcuts for each level.</p>
+                <p>Then you'll be tested on what you remember.</p>
+                <p>You need at least 4/10 correct answers to pass each level.</p>
+            </div>
+            <button class="button" id="start-button">Start Game</button>
+        </div>
+        
+        <div class="screen" id="memorize-screen">
+            <div class="level-indicator">Level <span id="level-number">1</span></div>
+            <h2 id="category-name">General Computer Shortcuts</h2>
+            <div class="timer" id="memorize-timer">00:30</div>
+            <div id="shortcuts-list" class="shortcuts-container"></div>
+        </div>
+        
+        <div class="screen" id="test-screen">
+            <div class="level-indicator">Level <span id="test-level-number">1</span></div>
+            <h2 id="test-category-name">General Computer Shortcuts</h2>
+            <p>Enter the shortcuts for these functions:</p>
+            <div id="test-questions" class="shortcuts-container"></div>
+            <button class="button" id="submit-button">Submit Answers</button>
+        </div>
+        
+        <div class="screen" id="results-screen">
+            <h2 id="results-title">Level Passed!</h2>
+            <div class="score-display" id="level-score">You got 5 out of 5 correct</div>
+            <div id="results-details" class="results-container"></div>
+            <button class="button" id="next-button">Next Level</button>
+            <button class="button" id="retry-button">Try Again</button>
+        </div>
+        
+        <div class="screen" id="final-results-screen">
+            <h1>Final Results</h1>
+            <div class="score-display" id="final-score">Final Score: 25/25 (100%)</div>
+            <div class="score-display" id="final-grade">Grade: Excellent / A</div>
+            <div id="level-breakdown" class="results-container"></div>
+            <button class="button" id="restart-button">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        // Game data
+        const SHORTCUT_CATEGORIES = [
+            {
+                name: "General Computer Shortcuts",
+                shortcuts: [
+                    {shortcut: "Ctrl + C", function: "Copy selected text or item"},
+                    {shortcut: "Ctrl + V", function: "Paste copied content"},
+                    {shortcut: "Ctrl + X", function: "Cut selected text or item"},
+                    {shortcut: "Ctrl + Z", function: "Undo last action"},
+                    {shortcut: "Ctrl + Y", function: "Redo last undone action"},
+                    {shortcut: "Ctrl + A", function: "Select all"},
+                    {shortcut: "Ctrl + S", function: "Save current document/file"},
+                    {shortcut: "Ctrl + P", function: "Print"},
+                    {shortcut: "Ctrl + F", function: "Find/search"},
+                    {shortcut: "Alt + Tab", function: "Switch between open apps"},
+                    {shortcut: "Alt + F4", function: "Close current window/app"},
+                    {shortcut: "Windows + D", function: "Show desktop"},
+                    {shortcut: "Windows + E", function: "Open File Explorer"},
+                    {shortcut: "Windows + L", function: "Lock computer"},
+                    {shortcut: "Windows + R", function: "Open Run dialog"},
+                    {shortcut: "Windows + Shift + S", function: "Snip & Sketch (screenshot tool)"}
+                ]
+            },
+            {
+                name: "Microsoft Office / Editing Shortcuts",
+                shortcuts: [
+                    {shortcut: "Ctrl + B", function: "Bold"},
+                    {shortcut: "Ctrl + I", function: "Italic"},
+                    {shortcut: "Ctrl + U", function: "Underline"},
+                    {shortcut: "Ctrl + K", function: "Insert hyperlink"},
+                    {shortcut: "Ctrl + N", function: "New document"},
+                    {shortcut: "Ctrl + O", function: "Open document"},
+                    {shortcut: "Ctrl + W", function: "Close document"},
+                    {shortcut: "Ctrl + Shift + >", function: "Increase font size"},
+                    {shortcut: "Ctrl + Shift + <", function: "Decrease font size"}
+                ]
+            },
+            {
+                name: "Browser Shortcuts",
+                shortcuts: [
+                    {shortcut: "Ctrl + T", function: "Open new tab"},
+                    {shortcut: "Ctrl + W", function: "Close current tab"},
+                    {shortcut: "Ctrl + Shift + T", function: "Reopen last closed tab"},
+                    {shortcut: "Ctrl + Tab", function: "Switch to next tab"},
+                    {shortcut: "Ctrl + Shift + Tab", function: "Switch to previous tab"},
+                    {shortcut: "Ctrl + H", function: "Open history"},
+                    {shortcut: "Ctrl + J", function: "Open downloads"},
+                    {shortcut: "Ctrl + L", function: "Focus address bar"},
+                    {shortcut: "Alt + D", function: "Focus address bar"},
+                    {shortcut: "F5", function: "Refresh page"},
+                    {shortcut: "Ctrl + Shift + R", function: "Hard refresh (ignore cache)"}
+                ]
+            },
+            {
+                name: "Windows CMD Commands",
+                shortcuts: [
+                    {shortcut: "dir", function: "List files and directories"},
+                    {shortcut: "cd [path]", function: "Change directory"},
+                    {shortcut: "cls", function: "Clear screen"},
+                    {shortcut: "copy [src] [dest]", function: "Copy files"},
+                    {shortcut: "move [src] [dest]", function: "Move files"},
+                    {shortcut: "del [filename]", function: "Delete file"},
+                    {shortcut: "mkdir [foldername]", function: "Create new directory"},
+                    {shortcut: "rmdir [foldername]", function: "Remove directory"},
+                    {shortcut: "ipconfig", function: "Show network configuration"},
+                    {shortcut: "ping [host]", function: "Test network connection"},
+                    {shortcut: "tasklist", function: "Show running processes"},
+                    {shortcut: "taskkill /IM [process] /F", function: "Kill a process"},
+                    {shortcut: "chkdsk", function: "Check disk for errors"},
+                    {shortcut: "sfc /scannow", function: "Scan system files for corruption"},
+                    {shortcut: "shutdown /s /t 0", function: "Shutdown immediately"},
+                    {shortcut: "shutdown /r /t 0", function: "Restart immediately"}
+                ]
+            },
+            {
+                name: "Power User Shortcuts",
+                shortcuts: [
+                    {shortcut: "Windows + X", function: "Open Quick Link menu"},
+                    {shortcut: "Windows + Ctrl + D", function: "Create new virtual desktop"},
+                    {shortcut: "Windows + Ctrl + → / ←", function: "Switch between virtual desktops"},
+                    {shortcut: "Windows + Tab", function: "Task View (all open windows)"},
+                    {shortcut: "Ctrl + Shift + Esc", function: "Open Task Manager"},
+                    {shortcut: "Windows + I", function: "Open Settings"},
+                    {shortcut: "Windows + Pause/Break", function: "System properties"}
+                ]
+            }
+        ];
+
+        // Game state
+        let gameState = {
+            currentLevel: 0,
+            questions: [],
+            userAnswers: [],
+            score: 0,
+            totalScore: 0,
+            memorizeTime: 30,
+            timeLeft: 30,
+            timerInterval: null
+        };
+
+        // DOM elements
+        const screens = {
+            start: document.getElementById('start-screen'),
+            memorize: document.getElementById('memorize-screen'),
+            test: document.getElementById('test-screen'),
+            results: document.getElementById('results-screen'),
+            final: document.getElementById('final-results-screen')
+        };
+
+        // Initialize game
+        function initGame() {
+            document.getElementById('start-button').addEventListener('click', startGame);
+            document.getElementById('submit-button').addEventListener('click', submitAnswers);
+            document.getElementById('next-button').addEventListener('click', nextLevel);
+            document.getElementById('retry-button').addEventListener('click', retryLevel);
+            document.getElementById('restart-button').addEventListener('click', restartGame);
+        }
+
+        // Show a specific screen
+        function showScreen(screenName) {
+            for (const screen in screens) {
+                screens[screen].style.display = 'none';
+            }
+            screens[screenName].style.display = 'flex';
+        }
+
+        // Start the game
+        function startGame() {
+            gameState.currentLevel = 0;
+            gameState.totalScore = 0;
+            prepareLevel();
+        }
+
+        // Prepare the current level
+        function prepareLevel() {
+            const category = SHORTCUT_CATEGORIES[gameState.currentLevel];
+            const allShortcuts = category.shortcuts;
+            
+            // Select up to 5 random shortcuts
+            gameState.questions = [];
+            const indices = [];
+            while (indices.length < Math.min(5, allShortcuts.length)) {
+                const randomIndex = Math.floor(Math.random() * allShortcuts.length);
+                if (!indices.includes(randomIndex)) {
+                    indices.push(randomIndex);
+                    gameState.questions.push(allShortcuts[randomIndex]);
+                }
+            }
+            
+            gameState.userAnswers = new Array(gameState.questions.length).fill('');
+            
+            // Update UI
+            document.getElementById('level-number').textContent = gameState.currentLevel + 1;
+            document.getElementById('test-level-number').textContent = gameState.currentLevel + 1;
+            document.getElementById('category-name').textContent = category.name;
+            document.getElementById('test-category-name').textContent = category.name;
+            
+            // Display shortcuts to memorize
+            const shortcutsList = document.getElementById('shortcuts-list');
+            shortcutsList.innerHTML = '';
+            
+            gameState.questions.forEach(item => {
+                const shortcutElement = document.createElement('div');
+                shortcutElement.className = 'shortcut-item';
+                shortcutElement.innerHTML = `
+                    <div class="shortcut">${item.shortcut}</div>
+                    <div class="function">${item.function}</div>
+                `;
+                shortcutsList.appendChild(shortcutElement);
+            });
+            
+            // Start the memorization timer
+            gameState.timeLeft = gameState.memorizeTime;
+            updateTimerDisplay();
+            
+            if (gameState.timerInterval) {
+                clearInterval(gameState.timerInterval);
+            }
+            
+            gameState.timerInterval = setInterval(() => {
+                gameState.timeLeft--;
+                updateTimerDisplay();
+                
+                if (gameState.timeLeft <= 0) {
+                    clearInterval(gameState.timerInterval);
+                    startTest();
+                }
+            }, 1000);
+            
+            showScreen('memorize');
+        }
+
+        // Update the timer display
+        function updateTimerDisplay() {
+            const timerElement = document.getElementById('memorize-timer');
+            const minutes = Math.floor(gameState.timeLeft / 60);
+            const seconds = gameState.timeLeft % 60;
+            
+            timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            if (gameState.timeLeft <= 10) {
+                timerElement.classList.add('timer-warning');
+            } else {
+                timerElement.classList.remove('timer-warning');
+            }
+        }
+
+        // Start the test phase
+        function startTest() {
+            const testQuestions = document.getElementById('test-questions');
+            testQuestions.innerHTML = '';
+            
+            gameState.questions.forEach((item, index) => {
+                const questionElement = document.createElement('div');
+                questionElement.className = 'test-item';
+                questionElement.innerHTML = `
+                    <div class="test-function">${item.function}</div>
+                    <input type="text" class="answer-input" data-index="${index}" 
+                           placeholder="Enter shortcut" value="${gameState.userAnswers[index]}">
+                `;
+                testQuestions.appendChild(questionElement);
+            });
+            
+            // Add event listeners to inputs
+            document.querySelectorAll('.answer-input').forEach(input => {
+                input.addEventListener('input', (e) => {
+                    const index = parseInt(e.target.dataset.index);
+                    gameState.userAnswers[index] = e.target.value;
+                });
+            });
+            
+            showScreen('test');
+        }
+
+        // Submit answers for evaluation
+        function submitAnswers() {
+            gameState.score = 0;
+            
+            gameState.questions.forEach((item, index) => {
+                if (gameState.userAnswers[index].trim().toUpperCase() === item.shortcut.toUpperCase()) {
+                    gameState.score++;
+                }
+            });
+            
+            gameState.totalScore += gameState.score;
+            
+            // Display results
+            const resultsDetails = document.getElementById('results-details');
+            resultsDetails.innerHTML = '';
+            
+            gameState.questions.forEach((item, index) => {
+                const isCorrect = gameState.userAnswers[index].trim().toUpperCase() === item.shortcut.toUpperCase();
+                
+                const resultElement = document.createElement('div');
+                resultElement.className = 'result-item';
+                resultElement.innerHTML = `
+                    <div>${item.function}</div>
+                    <div>
+                        <span class="${isCorrect ? 'correct' : 'incorrect'}">${gameState.userAnswers[index] || '(blank)'}</span> 
+                        <span> → </span>
+                        <span class="correct">${item.shortcut}</span>
+                    </div>
+                `;
+                resultsDetails.appendChild(resultElement);
+            });
+            
+            // Update results title and score
+            const resultsTitle = document.getElementById('results-title');
+            const levelScore = document.getElementById('level-score');
+            
+            if (gameState.score >= 4) {
+                resultsTitle.textContent = 'Level Passed!';
+                resultsTitle.style.color = '#64c864';
+                document.getElementById('next-button').style.display = 'block';
+                document.getElementById('retry-button').style.display = 'none';
+            } else {
+                resultsTitle.textContent = 'Level Failed';
+                resultsTitle.style.color = '#dc7864';
+                document.getElementById('next-button').style.display = 'none';
+                document.getElementById('retry-button').style.display = 'block';
+            }
+            
+            levelScore.textContent = `You got ${gameState.score} out of ${gameState.questions.length} correct`;
+            
+            showScreen('results');
+        }
+
+        // Move to the next level
+        function nextLevel() {
+            gameState.currentLevel++;
+            
+            if (gameState.currentLevel < SHORTCUT_CATEGORIES.length) {
+                prepareLevel();
+            } else {
+                showFinalResults();
+            }
+        }
+
+        // Retry the current level
+        function retryLevel() {
+            prepareLevel();
+        }
+
+        // Show final results
+        function showFinalResults() {
+            const totalPossible = SHORTCUT_CATEGORIES.reduce((total, category) => {
+                return total + Math.min(5, category.shortcuts.length);
+            }, 0);
+            
+            const percentage = (gameState.totalScore / totalPossible) * 100;
+            
+            // Determine grade
+            let grade;
+            if (percentage >= 90) {
+                grade = "Excellent / A";
+            } else if (percentage >= 80) {
+                grade = "Very Good / B";
+            } else if (percentage >= 70) {
+                grade = "Good / C";
+            } else if (percentage >= 60) {
+                grade = "Fair / D";
+            } else {
+                grade = "Poor / Fail";
+            }
+            
+            // Update final score display
+            document.getElementById('final-score').textContent = 
+                `Final Score: ${gameState.totalScore}/${totalPossible} (${percentage.toFixed(1)}%)`;
+            document.getElementById('final-grade').textContent = `Grade: ${grade}`;
+            
+            // Create level breakdown
+            const levelBreakdown = document.getElementById('level-breakdown');
+            levelBreakdown.innerHTML = '';
+            
+            SHORTCUT_CATEGORIES.forEach((category, index) => {
+                const levelElement = document.createElement('div');
+                levelElement.className = 'result-item';
+                levelElement.innerHTML = `
+                    <div>Level ${index + 1}: ${category.name}</div>
+                    <div>${Math.min(5, category.shortcuts.length)} questions</div>
+                `;
+                levelBreakdown.appendChild(levelElement);
+            });
+            
+            showScreen('final');
+        }
+
+        // Restart the game
+        function restartGame() {
+            showScreen('start');
+        }
+
+        // Initialize the game when the page loads
+        window.addEventListener('load', initGame);
+    </script>
+</body>
+</html>

@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Equity Theory Interpersonal Relations Management</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #34495e;
+            --success: #27ae60;
+            --warning: #f39c12;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--dark));
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card-title {
+            font-size: 1.5rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--light);
+        }
+        
+        .btn {
+            display: inline-block;
+            background: var(--secondary);
+            color: white;
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            margin: 0.3rem;
+        }
+        
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+        
+        .btn-danger {
+            background: var(--accent);
+        }
+        
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+        
+        .btn-success {
+            background: var(--success);
+        }
+        
+        .btn-success:hover {
+            background: #219653;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+        
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .tab-container {
+            margin-bottom: 1.5rem;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 1rem;
+        }
+        
+        .tab {
+            padding: 0.8rem 1.5rem;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .tab.active {
+            border-bottom: 3px solid var(--secondary);
+            color: var(--secondary);
+            font-weight: 600;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .partner-card {
+            border-left: 4px solid var(--secondary);
+        }
+        
+        .observation-card {
+            border-left: 4px solid var(--success);
+            margin-bottom: 1rem;
+        }
+        
+        .observation-meta {
+            font-size: 0.9rem;
+            color: #777;
+            margin-bottom: 0.5rem;
+        }
+        
+        .ratio-display {
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-align: center;
+            padding: 1rem;
+            border-radius: 5px;
+            margin: 1rem 0;
+        }
+        
+        .equitable {
+            background-color: rgba(39, 174, 96, 0.1);
+            color: var(--success);
+        }
+        
+        .inequitable {
+            background-color: rgba(231, 76, 60, 0.1);
+            color: var(--accent);
+        }
+        
+        .analysis-result {
+            padding: 1rem;
+            border-radius: 5px;
+            margin: 1rem 0;
+            background-color: #f8f9fa;
+        }
+        
+        .word-count {
+            font-size: 0.8rem;
+            color: #777;
+            text-align: right;
+            margin-top: 0.5rem;
+        }
+        
+        .word-count.warning {
+            color: var(--warning);
+        }
+        
+        .word-count.error {
+            color: var(--accent);
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 2rem;
+            padding: 1rem;
+            color: #777;
+            border-top: 1px solid #ddd;
+        }
+        
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Equity Theory Interpersonal Relations Management</h1>
+            <p class="subtitle">Comprehensive Behavioral Tracking & Analysis System</p>
+        </header>
+        
+        <div class="tab-container">
+            <div class="tabs">
+                <div class="tab active" data-tab="partners">Partners</div>
+                <div class="tab" data-tab="observations">Observations</div>
+                <div class="tab" data-tab="analysis">Analysis</div>
+                <div class="tab" data-tab="theory">Theory</div>
+            </div>
+            
+            <!-- Partners Tab -->
+            <div class="tab-content active" id="partners-tab">
+                <div class="card">
+                    <h2 class="card-title">Add New Partner</h2>
+                    <form id="partner-form">
+                        <div class="form-group">
+                            <label for="partner-name">Partner Name</label>
+                            <input type="text" id="partner-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="partner-inputs">Inputs (Contributions)</label>
+                            <input type="number" id="partner-inputs" step="0.1" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="partner-outcomes">Outcomes (Rewards)</label>
+                            <input type="number" id="partner-outcomes" step="0.1" required>
+                        </div>
+                        <button type="submit" class="btn btn-success">Add Partner</button>
+                    </form>
+                </div>
+                
+                <div class="card">
+                    <h2 class="card-title">Current Partners</h2>
+                    <div id="partners-list" class="grid">
+                        <!-- Partners will be dynamically added here -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Observations Tab -->
+            <div class="tab-content" id="observations-tab">
+                <div class="card">
+                    <h2 class="card-title">Add Behavioral Observation</h2>
+                    <form id="observation-form">
+                        <div class="form-group">
+                            <label for="observation-partner">Select Partner</label>
+                            <select id="observation-partner" required>
+                                <option value="">-- Select a Partner --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="observation-description">Observation Description (Max 10,000 words)</label>
+                            <textarea id="observation-description" required></textarea>
+                            <div class="word-count" id="word-count">Words: 0/10000</div>
+                        </div>
+                        <div class="form-group">
+                            <label for="observation-category">Category</label>
+                            <select id="observation-category" required>
+                                <option value="emotional_support">Emotional Support</option>
+                                <option value="practical_support">Practical Support</option>
+                                <option value="social_investment">Social Investment</option>
+                                <option value="communication">Communication</option>
+                                <option value="personal_growth">Personal Growth</option>
+                                <option value="intimacy">Intimacy</option>
+                                <option value="general">General</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="observation-impact-type">Impact Type</label>
+                            <select id="observation-impact-type" required>
+                                <option value="input">Input (Contribution)</option>
+                                <option value="outcome">Outcome (Reward)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="observation-impact-value">Impact Value</label>
+                            <input type="number" id="observation-impact-value" step="0.1" value="1.0" required>
+                        </div>
+                        <button type="submit" class="btn btn-success">Add Observation</button>
+                    </form>
+                </div>
+                
+                <div class="card">
+                    <h2 class="card-title">Recent Observations</h2>
+                    <div id="observations-list">
+                        <!-- Observations will be dynamically added here -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Analysis Tab -->
+            <div class="tab-content" id="analysis-tab">
+                <div class="card">
+                    <h2 class="card-title">Comprehensive Equity Analysis</h2>
+                    <p>Run a complete analysis using all major equity theory models.</p>
+                    <button id="run-analysis" class="btn">Run Comprehensive Analysis</button>
+                    
+                    <div id="analysis-results" class="hidden">
+                        <!-- Analysis results will be displayed here -->
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h2 class="card-title">Specific Calculations</h2>
+                    <div class="grid">
+                        <button class="btn" data-calculation="walster">Walster Formula</button>
+                        <button class="btn" data-calculation="adams">Adams Inequity Index</button>
+                        <button class="btn" data-calculation="hatfield">Hatfield Global Measure</button>
+                        <button class="btn" data-calculation="huseman">Huseman Sensitivity</button>
+                        <button class="btn" data-calculation="justice">Distributive Justice</button>
+                        <button class="btn" data-calculation="maintenance">Relational Maintenance</button>
+                    </div>
+                    
+                    <div id="calculation-results" class="analysis-result hidden">
+                        <!-- Specific calculation results will be displayed here -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Theory Tab -->
+            <div class="tab-content" id="theory-tab">
+                <div class="card">
+                    <h2 class="card-title">Equity Theory Models</h2>
+                    <div class="theory-list">
+                        <div class="theory-item">
+                            <h3>Adams (1965) - Original Inequity Theory</h3>
+                            <p>Focuses on perceived inequity in social exchange relationships and its effects on motivation.</p>
+                        </div>
+                        <div class="theory-item">
+                            <h3>Walster & Walster (1975) - Mathematical Formula</h3>
+                            <p>Developed a formal mathematical model: (O_A - I_A) / |I_A|^kA = (O_B - I_B) / |I_B|^kB</p>
+                        </div>
+                        <div class="theory-item">
+                            <h3>Hatfield et al. (1979) - Global Measure</h3>
+                            <p>Created a -3 to +3 scale measuring perceived equity in relationships.</p>
+                        </div>
+                        <div class="theory-item">
+                            <h3>Huseman et al. (1987) - Equity Sensitivity</h3>
+                            <p>Categorized individuals as Benevolents, Equity Sensitives, or Entitleds based on their equity preferences.</p>
+                        </div>
+                        <div class="theory-item">
+                            <h3>Deutsch (1985) - Distributive Justice</h3>
+                            <p>Focused on fairness in distribution of rewards based on contributions.</p>
+                        </div>
+                        <div class="theory-item">
+                            <h3>Canary & Stafford (1992) - Relational Maintenance</h3>
+                            <p>Linked equity to relational maintenance behaviors and relationship longevity.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h2 class="card-title">Behavioral Categories</h2>
+                    <div class="grid">
+                        <div class="category-card">
+                            <h3>Emotional Support</h3>
+                            <p>Listening, empathy, comfort, encouragement, validation</p>
+                        </div>
+                        <div class="category-card">
+                            <h3>Practical Support</h3>
+                            <p>Chores, errands, financial help, transportation, technical help</p>
+                        </div>
+                        <div class="category-card">
+                            <h3>Social Investment</h3>
+                            <p>Time together, shared activities, social events, family interaction</p>
+                        </div>
+                        <div class="category-card">
+                            <h3>Communication</h3>
+                            <p>Initiating contact, conflict resolution, deep conversations, daily checkins</p>
+                        </div>
+                        <div class="category-card">
+                            <h3>Personal Growth</h3>
+                            <p>Career support, skill development, health encouragement, goal support</p>
+                        </div>
+                        <div class="category-card">
+                            <h3>Intimacy</h3>
+                            <p>Physical affection, emotional vulnerability, trust displays, personal sharing</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Equity Theory Interpersonal Relations Management System &copy; 2023</p>
+        </footer>
+    </div>
+
+    <script>
+        // Application State
+        const state = {
+            partners: [],
+            observations: [],
+            currentTab: 'partners'
+        };
+
+        // DOM Elements
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const partnerForm = document.getElementById('partner-form');
+        const observationForm = document.getElementById('observation-form');
+        const partnersList = document.getElementById('partners-list');
+        const observationsList = document.getElementById('observations-list');
+        const observationPartnerSelect = document.getElementById('observation-partner');
+        const observationDescription = document.getElementById('observation-description');
+        const wordCountDisplay = document.getElementById('word-count');
+        const runAnalysisBtn = document.getElementById('run-analysis');
+        const analysisResults = document.getElementById('analysis-results');
+        const calculationResults = document.getElementById('calculation-results');
+        const calculationButtons = document.querySelectorAll('[data-calculation]');
+
+        // Initialize the application
+        function init() {
+            loadFromLocalStorage();
+            setupEventListeners();
+            renderPartners();
+            renderObservations();
+            updatePartnerSelect();
+        }
+
+        // Set up event listeners
+        function setupEventListeners() {
+            // Tab switching
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabId = tab.getAttribute('data-tab');
+                    switchTab(tabId);
+                });
+            });
+
+            // Partner form submission
+            partnerForm.addEventListener('submit', handlePartnerSubmit);
+
+            // Observation form submission
+            observationForm.addEventListener('submit', handleObservationSubmit);
+
+            // Word count tracking for observation description
+            observationDescription.addEventListener('input', updateWordCount);
+
+            // Analysis buttons
+            runAnalysisBtn.addEventListener('click', runComprehensiveAnalysis);
+            
+            calculationButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const calculation = button.getAttribute('data-calculation');
+                    runSpecificCalculation(calculation);
+                });
+            });
+        }
+
+        // Switch between tabs
+        function switchTab(tabId) {
+            // Update active tab
+            tabs.forEach(tab => {
+                if (tab.getAttribute('data-tab') === tabId) {
+                    tab.classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                }
+            });
+
+            // Update active tab content
+            tabContents.forEach(content => {
+                if (content.id === `${tabId}-tab`) {
+                    content.classList.add('active');
+                } else {
+                    content.classList.remove('active');
+                }
+            });
+
+            state.currentTab = tabId;
+        }
+
+        // Handle partner form submission
+        function handlePartnerSubmit(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('partner-name').value;
+            const inputs = parseFloat(document.getElementById('partner-inputs').value);
+            const outcomes = parseFloat(document.getElementById('partner-outcomes').value);
+            
+            const partner = {
+                id: generateId(),
+                name,
+                inputs,
+                outcomes,
+                observations: []
+            };
+            
+            state.partners.push(partner);
+            saveToLocalStorage();
+            renderPartners();
+            updatePartnerSelect();
+            partnerForm.reset();
+            
+            // Show success message
+            alert(`Partner "${name}" added successfully!`);
+        }
+
+        // Handle observation form submission
+        function handleObservationSubmit(e) {
+            e.preventDefault();
+            
+            const partnerId = observationPartnerSelect.value;
+            const description = observationDescription.value;
+            const category = document.getElementById('observation-category').value;
+            const impactType = document.getElementById('observation-impact-type').value;
+            const impactValue = parseFloat(document.getElementById('observation-impact-value').value);
+            
+            // Check word count limit
+            const wordCount = countWords(description);
+            if (wordCount > 10000) {
+                alert('Observation description exceeds the 10,000 word limit. Please shorten your description.');
+                return;
+            }
+            
+            const observation = {
+                id: generateId(),
+                partnerId,
+                timestamp: new Date().toISOString(),
+                description,
+                category,
+                impactType,
+                impactValue
+            };
+            
+            state.observations.push(observation);
+            saveToLocalStorage();
+            renderObservations();
+            observationForm.reset();
+            updateWordCount();
+            
+            // Show success message
+            alert('Observation added successfully!');
+        }
+
+        // Update word count display
+        function updateWordCount() {
+            const text = observationDescription.value;
+            const wordCount = countWords(text);
+            
+            wordCountDisplay.textContent = `Words: ${wordCount}/10000`;
+            
+            // Update styling based on word count
+            wordCountDisplay.classList.remove('warning', 'error');
+            if (wordCount > 8000) {
+                wordCountDisplay.classList.add('warning');
+            }
+            if (wordCount > 10000) {
+                wordCountDisplay.classList.add('error');
+            }
+        }
+
+        // Count words in a string
+        function countWords(text) {
+            return text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
+        }
+
+        // Update partner select dropdown
+        function updatePartnerSelect() {
+            observationPartnerSelect.innerHTML = '<option value="">-- Select a Partner --</option>';
+            
+            state.partners.forEach(partner => {
+                const option = document.createElement('option');
+                option.value = partner.id;
+                option.textContent = partner.name;
+                observationPartnerSelect.appendChild(option);
+            });
+        }
+
+        // Render partners list
+        function renderPartners() {
+            partnersList.innerHTML = '';
+            
+            if (state.partners.length === 0) {
+                partnersList.innerHTML = '<p>No partners added yet.</p>';
+                return;
+            }
+            
+            state.partners.forEach(partner => {
+                const partnerCard = document.createElement('div');
+                partnerCard.className = 'card partner-card';
+                
+                // Calculate equity ratio
+                const ratio = partner.inputs !== 0 ? (partner.outcomes / partner.inputs).toFixed(3) : '∞';
+                const ratioClass = Math.abs(ratio - 1) < 0.1 ? 'equitable' : 'inequitable';
+                
+                // Count observations for this partner
+                const observationCount = state.observations.filter(obs => obs.partnerId === partner.id).length;
+                
+                partnerCard.innerHTML = `
+                    <h3>${partner.name}</h3>
+                    <p>Inputs: ${partner.inputs}</p>
+                    <p>Outcomes: ${partner.outcomes}</p>
+                    <div class="ratio-display ${ratioClass}">Ratio: ${ratio}</div>
+                    <p>Observations: ${observationCount}</p>
+                    <button class="btn btn-danger" data-partner-id="${partner.id}">Remove</button>
+                `;
+                
+                partnersList.appendChild(partnerCard);
+            });
+            
+            // Add event listeners to remove buttons
+            document.querySelectorAll('[data-partner-id]').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const partnerId = e.target.getAttribute('data-partner-id');
+                    removePartner(partnerId);
+                });
+            });
+        }
+
+        // Render observations list
+        function renderObservations() {
+            observationsList.innerHTML = '';
+            
+            if (state.observations.length === 0) {
+                observationsList.innerHTML = '<p>No observations added yet.</p>';
+                return;
+            }
+            
+            // Sort observations by timestamp (newest first)
+            const sortedObservations = [...state.observations].sort((a, b) => 
+                new Date(b.timestamp) - new Date(a.timestamp)
+            );
+            
+            sortedObservations.forEach(observation => {
+                const partner = state.partners.find(p => p.id === observation.partnerId);
+                if (!partner) return;
+                
+                const observationCard = document.createElement('div');
+                observationCard.className = 'card observation-card';
+                
+                const date = new Date(observation.timestamp).toLocaleString();
+                const wordCount = countWords(observation.description);
+                
+                observationCard.innerHTML = `
+                    <div class="observation-meta">
+                        <strong>${partner.name}</strong> • ${date} • ${observation.category.replace('_', ' ').toUpperCase()}
+                    </div>
+                    <p>${observation.description}</p>
+                    <div class="observation-meta">
+                        Impact: ${observation.impactType} (${observation.impactValue}) • Words: ${wordCount}
+                    </div>
+                    <button class="btn btn-danger" data-observation-id="${observation.id}">Remove</button>
+                `;
+                
+                observationsList.appendChild(observationCard);
+            });
+            
+            // Add event listeners to remove buttons
+            document.querySelectorAll('[data-observation-id]').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const observationId = e.target.getAttribute('data-observation-id');
+                    removeObservation(observationId);
+                });
+            });
+        }
+
+        // Remove a partner
+        function removePartner(partnerId) {
+            if (confirm('Are you sure you want to remove this partner? All associated observations will also be removed.')) {
+                // Remove partner
+                state.partners = state.partners.filter(partner => partner.id !== partnerId);
+                
+                // Remove associated observations
+                state.observations = state.observations.filter(obs => obs.partnerId !== partnerId);
+                
+                saveToLocalStorage();
+                renderPartners();
+                renderObservations();
+                updatePartnerSelect();
+            }
+        }
+
+        // Remove an observation
+        function removeObservation(observationId) {
+            if (confirm('Are you sure you want to remove this observation?')) {
+                state.observations = state.observations.filter(obs => obs.id !== observationId);
+                saveToLocalStorage();
+                renderObservations();
+            }
+        }
+
+        // Run comprehensive analysis
+        function runComprehensiveAnalysis() {
+            if (state.partners.length < 2) {
+                alert('Need at least 2 partners for analysis!');
+                return;
+            }
+            
+            analysisResults.classList.remove('hidden');
+            analysisResults.innerHTML = '<h3>Analysis Results</h3>';
+            
+            // Calculate individual ratios
+            analysisResults.innerHTML += '<h4>Individual Equity Ratios</h4>';
+            state.partners.forEach(partner => {
+                const ratio = partner.inputs !== 0 ? (partner.outcomes / partner.inputs).toFixed(3) : '∞';
+                analysisResults.innerHTML += `<p>${partner.name}: ${ratio}</p>`;
+            });
+            
+            // If exactly 2 partners, show pair analyses
+            if (state.partners.length === 2) {
+                const partnerA = state.partners[0];
+                const partnerB = state.partners[1];
+                
+                // Walster Formula
+                const walsterResult = calculateWalsterFormula(partnerA, partnerB);
+                analysisResults.innerHTML += `
+                    <h4>Walster Formula Analysis</h4>
+                    <p>Left Side: ${walsterResult.leftSide.toFixed(3)}</p>
+                    <p>Right Side: ${walsterResult.rightSide.toFixed(3)}</p>
+                    <p>Equitable: ${walsterResult.equitable ? 'Yes' : 'No'}</p>
+                `;
+                
+                // Adams Inequity Index
+                const adamsResult = calculateAdamsInequity(partnerA, partnerB);
+                analysisResults.innerHTML += `
+                    <h4>Adams Inequity Index</h4>
+                    <p>Inequity Index: ${adamsResult.inequityIndex.toFixed(3)}</p>
+                    <p>Status: ${adamsResult.equityStatus}</p>
+                `;
+                
+                // Hatfield Global Measure
+                const hatfieldResult = calculateHatfieldMeasure([partnerA, partnerB]);
+                analysisResults.innerHTML += `
+                    <h4>Hatfield Global Measure</h4>
+                    <p>Score: ${hatfieldResult.score}</p>
+                    <p>Interpretation: ${hatfieldResult.interpretation}</p>
+                `;
+                
+                // Relational Maintenance Prediction
+                const maintenanceResult = calculateRelationalMaintenance([partnerA, partnerB]);
+                analysisResults.innerHTML += `
+                    <h4>Relational Maintenance Prediction</h4>
+                    <p>Score: ${maintenanceResult.score}/100</p>
+                    <p>Prediction: ${maintenanceResult.prediction}</p>
+                `;
+            }
+            
+            // Group analyses
+            const sensitivityResult = calculateHusemanSensitivity(state.partners);
+            analysisResults.innerHTML += `
+                <h4>Huseman Equity Sensitivity</h4>
+            `;
+            sensitivityResult.analysis.forEach(item => {
+                analysisResults.innerHTML += `<p>${item.partner}: ${item.category} - ${item.description}</p>`;
+            });
+            
+            const justiceResult = calculateDistributiveJustice(state.partners);
+            analysisResults.innerHTML += `
+                <h4>Distributive Justice Analysis</h4>
+                <p>Justice Index: ${justiceResult.justiceIndex.toFixed(3)}</p>
+                <p>Status: ${justiceResult.status}</p>
+                <p>Standard Deviation: ${justiceResult.stdDeviation.toFixed(3)}</p>
+            `;
+            
+            // Overall assessment
+            let overallAssessment = "Highly Equitable Relationship";
+            if (justiceResult.justiceIndex <= 0.4) {
+                overallAssessment = "Highly Inequitable Relationship";
+            } else if (justiceResult.justiceIndex <= 0.6) {
+                overallAssessment = "Somewhat Inequitable Relationship";
+            } else if (justiceResult.justiceIndex <= 0.8) {
+                overallAssessment = "Moderately Equitable Relationship";
+            }
+            
+            analysisResults.innerHTML += `
+                <div class="analysis-result ${overallAssessment.includes('Equitable') ? 'equitable' : 'inequitable'}">
+                    <h4>Overall Assessment</h4>
+                    <p>${overallAssessment}</p>
+                </div>
+            `;
+        }
+
+        // Run specific calculation
+        function runSpecificCalculation(calculation) {
+            if (state.partners.length < 2) {
+                alert('Need at least 2 partners for this calculation!');
+                return;
+            }
+            
+            calculationResults.classList.remove('hidden');
+            calculationResults.innerHTML = `<h3>${getCalculationName(calculation)} Results</h3>`;
+            
+            const partnerA = state.partners[0];
+            const partnerB = state.partners[1];
+            
+            switch(calculation) {
+                case 'walster':
+                    const walsterResult = calculateWalsterFormula(partnerA, partnerB);
+                    calculationResults.innerHTML += `
+                        <p>Left Side (A): ${walsterResult.leftSide.toFixed(3)}</p>
+                        <p>Right Side (B): ${walsterResult.rightSide.toFixed(3)}</p>
+                        <p>Equitable: ${walsterResult.equitable ? 'Yes' : 'No'}</p>
+                        <p>k Values: A=${walsterResult.kA}, B=${walsterResult.kB}</p>
+                    `;
+                    break;
+                    
+                case 'adams':
+                    const adamsResult = calculateAdamsInequity(partnerA, partnerB);
+                    calculationResults.innerHTML += `
+                        <p>Inequity Index: ${adamsResult.inequityIndex.toFixed(3)}</p>
+                        <p>Ratio A: ${adamsResult.ratioA.toFixed(3)}</p>
+                        <p>Ratio B: ${adamsResult.ratioB.toFixed(3)}</p>
+                        <p>Status: ${adamsResult.equityStatus}</p>
+                    `;
+                    break;
+                    
+                case 'hatfield':
+                    const hatfieldResult = calculateHatfieldMeasure([partnerA, partnerB]);
+                    calculationResults.innerHTML += `
+                        <p>Score: ${hatfieldResult.score}</p>
+                        <p>Interpretation: ${hatfieldResult.interpretation}</p>
+                    `;
+                    break;
+                    
+                case 'huseman':
+                    const sensitivityResult = calculateHusemanSensitivity(state.partners);
+                    sensitivityResult.analysis.forEach(item => {
+                        calculationResults.innerHTML += `
+                            <p>${item.partner}: ${item.category} (Ratio: ${item.ratio.toFixed(3)})</p>
+                            <p>Description: ${item.description}</p>
+                        `;
+                    });
+                    break;
+                    
+                case 'justice':
+                    const justiceResult = calculateDistributiveJustice(state.partners);
+                    calculationResults.innerHTML += `
+                        <p>Justice Index: ${justiceResult.justiceIndex.toFixed(3)}</p>
+                        <p>Status: ${justiceResult.status}</p>
+                        <p>Standard Deviation: ${justiceResult.stdDeviation.toFixed(3)}</p>
+                    `;
+                    break;
+                    
+                case 'maintenance':
+                    const maintenanceResult = calculateRelationalMaintenance([partnerA, partnerB]);
+                    calculationResults.innerHTML += `
+                        <p>Maintenance Score: ${maintenanceResult.score}/100</p>
+                        <p>Prediction: ${maintenanceResult.prediction}</p>
+                        <p>Equitable: ${maintenanceResult.equitable ? 'Yes' : 'No'}</p>
+                    `;
+                    break;
+            }
+        }
+
+        // Equity Theory Calculations
+        
+        function calculateWalsterFormula(a, b) {
+            const diffA = a.outcomes - a.inputs;
+            const diffB = b.outcomes - b.inputs;
+            
+            const kA = diffA >= 0 ? 1 : -1;
+            const kB = diffB >= 0 ? 1 : -1;
+            
+            const denomA = a.inputs !== 0 ? Math.abs(a.inputs) ** kA : Infinity;
+            const denomB = b.inputs !== 0 ? Math.abs(b.inputs) ** kB : Infinity;
+            
+            const leftSide = denomA !== Infinity ? diffA / denomA : Infinity;
+            const rightSide = denomB !== Infinity ? diffB / denomB : Infinity;
+            
+            const equitable = Math.abs(leftSide - rightSide) < 0.001;
+            
+            return {
+                leftSide,
+                rightSide,
+                equitable,
+                kA,
+                kB,
+                differenceA: diffA,
+                differenceB: diffB
+            };
+        }
+        
+        function calculateAdamsInequity(a, b) {
+            const ratioA = a.inputs !== 0 ? a.outcomes / a.inputs : Infinity;
+            const ratioB = b.inputs !== 0 ? b.outcomes / b.inputs : Infinity;
+            
+            let inequityIndex;
+            if (ratioB === 0 || ratioA === Infinity || ratioB === Infinity) {
+                inequityIndex = Infinity;
+            } else {
+                inequityIndex = Math.abs(ratioA / ratioB - 1);
+            }
+            
+            const equityStatus = inequityIndex < 0.1 ? "Equitable" : "Inequitable";
+            
+            return {
+                inequityIndex,
+                ratioA,
+                ratioB,
+                equityStatus
+            };
+        }
+        
+        function calculateHatfieldMeasure(partners) {
+            if (partners.length !== 2) {
+                return { score: 0, interpretation: "Invalid number of partners" };
+            }
+            
+            const a = partners[0];
+            const b = partners[1];
+            
+            const ratioA = a.inputs !== 0 ? a.outcomes / a.inputs : Infinity;
+            const ratioB = b.inputs !== 0 ? b.outcomes / b.inputs : Infinity;
+            
+            if (ratioB === 0 || ratioA === Infinity || ratioB === Infinity) {
+                return { score: 0, interpretation: "Unable to calculate" };
+            }
+            
+            const relativeRatio = ratioA / ratioB;
+            let score;
+            
+            if (relativeRatio > 1.5) {
+                score = -3;  // I am getting much better deal
+            } else if (relativeRatio > 1.2) {
+                score = -2;  // I am getting somewhat better deal
+            } else if (relativeRatio > 1.05) {
+                score = -1;  // I am getting slightly better deal
+            } else if (relativeRatio >= 0.95) {
+                score = 0;   // Equally good or bad deal
+            } else if (relativeRatio > 0.8) {
+                score = 1;   // Partner getting slightly better deal
+            } else if (relativeRatio > 0.67) {
+                score = 2;   // Partner getting somewhat better deal
+            } else {
+                score = 3;   // Partner getting much better deal
+            }
+            
+            const interpretations = {
+                '-3': "You are getting a MUCH BETTER deal",
+                '-2': "You are getting a SOMEWHAT BETTER deal", 
+                '-1': "You are getting a SLIGHTLY BETTER deal",
+                '0': "You are getting an EQUALLY GOOD or BAD deal",
+                '1': "Partner is getting a SLIGHTLY BETTER deal",
+                '2': "Partner is getting a SOMEWHAT BETTER deal",
+                '3': "Partner is getting a MUCH BETTER deal"
+            };
+            
+            return {
+                score,
+                interpretation: interpretations[score] || "Unable to interpret"
+            };
+        }
+        
+        function calculateHusemanSensitivity(partners) {
+            const ratios = partners.map(p => p.inputs !== 0 ? p.outcomes / p.inputs : Infinity);
+            const validRatios = ratios.filter(r => r !== Infinity);
+            const meanRatio = validRatios.length > 0 ? 
+                validRatios.reduce((sum, ratio) => sum + ratio, 0) / validRatios.length : 1.0;
+            
+            const analysis = partners.map((partner, i) => {
+                const ratio = ratios[i];
+                let category, sensitivityScore;
+                
+                if (ratio === Infinity) {
+                    category = "Undefined (Zero Inputs)";
+                    sensitivityScore = 0;
+                } else if (ratio < meanRatio * 0.8) {
+                    category = "Benevolent";
+                    sensitivityScore = -1;
+                } else if (ratio > meanRatio * 1.2) {
+                    category = "Entitled";
+                    sensitivityScore = 1;
+                } else {
+                    category = "Equity Sensitive";
+                    sensitivityScore = 0;
+                }
+                
+                const descriptions = {
+                    "Benevolent": "Prefers giving more than receiving, tolerant of underbenefit",
+                    "Equity Sensitive": "Prefers balanced exchange, follows traditional equity norms", 
+                    "Entitled": "Prefers receiving more than giving, seeks overbenefit",
+                    "Undefined (Zero Inputs)": "Cannot calculate due to zero inputs"
+                };
+                
+                return {
+                    partner: partner.name,
+                    ratio,
+                    category,
+                    sensitivityScore,
+                    description: descriptions[category] || "Unknown category"
+                };
+            });
+            
+            return {
+                analysis,
+                meanReferenceRatio: meanRatio
+            };
+        }
+        
+        function calculateDistributiveJustice(partners) {
+            const ratios = partners.map(p => p.inputs !== 0 ? p.outcomes / p.inputs : Infinity);
+            const validRatios = ratios.filter(r => r !== Infinity);
+            
+            if (validRatios.length === 0) {
+                return { justiceIndex: 0, status: "Undefined", stdDeviation: 0, meanRatio: 0 };
+            }
+            
+            const meanRatio = validRatios.reduce((sum, ratio) => sum + ratio, 0) / validRatios.length;
+            const variance = validRatios.reduce((sum, ratio) => sum + Math.pow(ratio - meanRatio, 2), 0) / validRatios.length;
+            const stdDeviation = Math.sqrt(variance);
+            
+            // Justice index: 1.0 is perfect justice, lower values indicate injustice
+            const justiceIndex = 1.0 / (1.0 + stdDeviation);
+            
+            let status;
+            if (justiceIndex > 0.9) {
+                status = "High Justice";
+            } else if (justiceIndex > 0.7) {
+                status = "Moderate Justice";
+            } else if (justiceIndex > 0.5) {
+                status = "Low Justice";
+            } else {
+                status = "Severe Injustice";
+            }
+            
+            return {
+                justiceIndex,
+                status,
+                stdDeviation,
+                meanRatio
+            };
+        }
+        
+        function calculateRelationalMaintenance(partners) {
+            if (partners.length !== 2) {
+                return { score: 0, prediction: "Invalid number of partners", equitable: false };
+            }
+            
+            const equityResult = calculateWalsterFormula(partners[0], partners[1]);
+            const hatfieldResult = calculateHatfieldMeasure(partners);
+            
+            let maintenanceScore, prediction;
+            
+            if (equityResult.equitable) {
+                maintenanceScore = 90;
+                prediction = "High Maintenance Likely";
+            } else {
+                const hatfieldAbs = Math.abs(hatfieldResult.score);
+                maintenanceScore = Math.max(20, 80 - (hatfieldAbs * 20));
+                
+                if (maintenanceScore > 70) {
+                    prediction = "Moderate-High Maintenance";
+                } else if (maintenanceScore > 50) {
+                    prediction = "Moderate Maintenance";
+                } else {
+                    prediction = "Low Maintenance Likely";
+                }
+            }
+            
+            return {
+                score: maintenanceScore,
+                prediction,
+                equitable: equityResult.equitable,
+                hatfieldScore: hatfieldResult.score
+            };
+        }
+
+        // Helper functions
+        
+        function getCalculationName(calculation) {
+            const names = {
+                'walster': 'Walster Formula',
+                'adams': 'Adams Inequity Index',
+                'hatfield': 'Hatfield Global Measure',
+                'huseman': 'Huseman Equity Sensitivity',
+                'justice': 'Distributive Justice Index',
+                'maintenance': 'Relational Maintenance Predictor'
+            };
+            
+            return names[calculation] || calculation;
+        }
+        
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        }
+        
+        function saveToLocalStorage() {
+            localStorage.setItem('equityTheoryPartners', JSON.stringify(state.partners));
+            localStorage.setItem('equityTheoryObservations', JSON.stringify(state.observations));
+        }
+        
+        function loadFromLocalStorage() {
+            const savedPartners = localStorage.getItem('equityTheoryPartners');
+            const savedObservations = localStorage.getItem('equityTheoryObservations');
+            
+            if (savedPartners) {
+                state.partners = JSON.parse(savedPartners);
+            }
+            
+            if (savedObservations) {
+                state.observations = JSON.parse(savedObservations);
+            }
+        }
+
+        // Initialize the application when the DOM is loaded
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
